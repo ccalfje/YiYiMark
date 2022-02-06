@@ -10,7 +10,9 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:catmark.helloWorld"
+		"onCommand:catmark.helloWorld",
+        "onView:cat-markview",
+        "onCommand:catmark.markCurrentLine"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -18,6 +20,10 @@
 			{
 				"command": "catmark.helloWorld",
 				"title": "Hello World"
+			},
+			{
+				"command": "catmark.markCurrentLine",
+				"title": "Mark Current Line"
 			}
 		],
 		"viewsContainers": {
@@ -38,7 +44,16 @@
 					"contextualTitle": "mark"
 				}
 			]
-        }
+        },
+		"menus": {
+			"editor/context": [
+				{
+					"when": "editorFocus",
+					"command": "catmark.markCurrentLine",
+					"group": "navigation"
+				}
+			]
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

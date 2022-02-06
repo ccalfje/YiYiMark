@@ -57,6 +57,7 @@ export class MarkDataTreeNode {
     }
 
     addChild(child : MarkDataTreeNode) {
+        child.parent = this;
         this.children.push(child);
     }
 
