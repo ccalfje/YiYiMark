@@ -6,86 +6,199 @@ export enum MarkType {
     file = "file",
 }
 
-export interface MarkData {
-    id : string; // 唯一编号
-    markType : MarkType;
-    filePath : string; 
-    name : string;
-    comment : string; // 对该书签的详细描述
-    line : number;
-}
-
-// TreeView 节点，控制树节点的外观
-export class MarkTreeItem extends vscode.TreeItem {
-
-	constructor(treeNode : MarkDataTreeNode, command?: vscode.Command) {
-		super(treeNode.getName(), treeNode.getCollapsibleState());
-        this.treeNode = treeNode;
-	}
-
-    treeNode : MarkDataTreeNode;
-
-	// iconPath = {
-	// 	light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-	// 	dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-	// };
-
-	contextValue = 'dependency';
-}
-
-// 数据节点，保存mark的关键数据
-export class MarkDataTreeNode {
-    constructor(data : MarkData, parent : MarkDataTreeNode | null = null) {
-        this.data = data;
-        this.parent = parent;
-        this.treeItem = null;
+export class TreeNode {
+    getParent() {
+        return this.parent;
     }
 
-    getTreeItem() : MarkTreeItem
-    {
-        if (this.treeItem) {
-            return this.treeItem;
-        } else {
-            this.treeItem = new MarkTreeItem(this);
-            return this.treeItem;
+    getChildren() {
+        return this.children;
+    }
+
+    addChild(child : TreeNode) {
+        this.children.push(child);
+        child.parent = this;
+    }
+
+    insertChild(child : TreeNode, index : number) {
+        if (index <= this.children.length) {
+            this.children.splice(index, 0, child);
+            child.parent = this;
         }
     }
 
-    getChildrenTreeItems() : MarkTreeItem[]
-    {
-        return this.children.map((value: MarkDataTreeNode) => value.getTreeItem());
+    deleteChildByIndex(index : number) {
+        if (index < this.children.length) {
+            let child = this.children[index];
+            this.children.splice(index, 1);
+            child.parent = null;
+        }
     }
 
-    addChild(child : MarkDataTreeNode) {
-        child.parent = this;
-        this.children.push(child);
+    deleteChild(node : TreeNode) {
+        for (let i = 0; i <= this.children.length; ++i) {
+            if (node === this.children[i]) {
+                this.children.splice(i, 1);
+                return;
+            }
+        }
+    }
+
+    getIndex(node : TreeNode) {
+
+    }
+
+    traverseNode(opfun : (node : TreeNode) => any) {
+        opfun(this);
+        this.children.forEach(element => {
+            element.traverseNode(opfun);
+        });
+    }
+
+    // 由子类实现
+    isEqual(node : TreeNode) : boolean {
+        return this.parent === node.parent;
+    }
+
+
+    parent : TreeNode | null = null;
+    children : TreeNode[] = [];
+}
+
+export class MarkData extends TreeNode {
+    isEqual(node: MarkData): boolean {
+        return this.id === node.id && super.isEqual(node);
+    }
+
+    createTreeItem() {
+        return new vscode.TreeItem(this.getName(), this.getCollapsibleState());
+    }
+
+    getName() {
+        return this.name;
+    }
+    setName(name : string) {
+        this.name = name;
+    }
+
+    getFilePath() {
+        return this.filePath;
+    }
+    setFilePath(filePath : string) {
+        this.filePath = filePath;
+    }
+
+    getComment() {
+        return this.comment;
+    }
+    setComment(comment : string) {
+        this.comment = comment;
+    }
+
+    getLineNum() {
+        return this.line;
+    }
+    setLineNum(line : number) {
+        this.line = line;
+    }
+
+    getMarkType() {
+        return this.markType;
+    }
+    setMarkType(type : MarkType) {
+        this.markType = type;
     }
 
     getCollapsibleState() : vscode.TreeItemCollapsibleState
     {
-        switch(this.data.markType) {
-            case MarkType.file:
-                return vscode.TreeItemCollapsibleState.None;
-            case MarkType.group:
-                return vscode.TreeItemCollapsibleState.Collapsed;
-            default:
-                return vscode.TreeItemCollapsibleState.None;
+        return this.collapsibleState;
+    }
+    setCollapsibleState(state : vscode.TreeItemCollapsibleState) {
+        if (this.markType === MarkType.file) {
+            return;
+        } else if (this.markType === MarkType.group) {
+            if (state === vscode.TreeItemCollapsibleState.None) {
+                return;
+            } else {
+                this.collapsibleState = state;
+            }
         }
     }
 
-    getName() : string
-    {
-        return this.data.name;
-    }
+    id : string = ""; // 唯一编号
+    markType : MarkType = MarkType.file;
+    name : string = "";
+    comment : string = ""; // 对该书签的详细描述
+    filePath : string = ""; 
+    line : number = 0;
+    collapsibleState : vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None;
 
-    data : MarkData;
-    parent : MarkDataTreeNode | null;
-    children : MarkDataTreeNode[] = [];
-    treeItem : MarkTreeItem | null;
-
+    contextValue = 'dependency';
 }
 
-function markDataTreeToJson(root : MarkDataTreeNode) : string
+export function createFileMarkData(name : string, comment : string, filePath : string, line : number) : MarkData
+{
+    let data = new MarkData;
+    data.setName(name);
+    data.setComment(comment);
+    data.setFilePath(filePath);
+    data.setLineNum(line);
+    data.setMarkType(MarkType.file);
+    data.setCollapsibleState(vscode.TreeItemCollapsibleState.None);
+    return data;
+}
+
+export function createGroupMarkData(name : string): MarkData
+{
+    let data = new MarkData;
+    data.setName(name);
+    data.setMarkType(MarkType.group);
+    data.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
+    return data;
+}
+
+
+export class MarkDataProvider implements vscode.TreeDataProvider<MarkData> {
+
+    private _onDidChangeTreeData: vscode.EventEmitter<MarkData | undefined | void> = new vscode.EventEmitter<MarkData | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<MarkData | undefined | void> = this._onDidChangeTreeData.event;
+
+    rootNode: MarkData;
+
+    constructor(rootNode: MarkData) {
+        this.rootNode = rootNode;
+    }
+
+    getRootNode() {
+        return this.rootNode;
+    }
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    refreshNode(element : MarkData) {
+        this._onDidChangeTreeData.fire(element);
+    }
+
+    getTreeItem(element: MarkData): vscode.TreeItem {
+        let treeItem = element.createTreeItem();
+        return treeItem;
+    }
+
+    getChildren(element?: MarkData): Thenable<MarkData[]> {
+        if (element) {
+            let children  = element.getChildren() as MarkData[];
+            return Promise.resolve(children);
+        } else {
+            let children  = this.rootNode.getChildren() as MarkData[];
+            return Promise.resolve(children);
+        }
+    }
+}
+
+
+function markDataTreeToJson(root : MarkData) : string
 {
     return JSON.stringify(root, (key : string, value : any)=> {
         if (key === "parent" || key === "treeItem") {
@@ -96,7 +209,7 @@ function markDataTreeToJson(root : MarkDataTreeNode) : string
     });
 }
 
-function jsonToMarkDataTree(data : string) : MarkDataTreeNode
+function jsonToMarkDataTree(data : string) : MarkData
 {
     let treeData = JSON.parse(data, (key : string, value : any) => {
         if (key === "markType") {
@@ -113,23 +226,23 @@ function jsonToMarkDataTree(data : string) : MarkDataTreeNode
         }
     });
 
-    let setParent = function(dataTree : MarkDataTreeNode) {
-        dataTree.children.forEach((value: MarkDataTreeNode, index: number, array: MarkDataTreeNode[]) => {
-            value.parent = dataTree;
-            setParent(value);
-        });
-    };
-    setParent(treeData);
+    // let setParent = function(dataTree : MarkData) {
+    //     dataTree.children.forEach((value: MarkData, index: number, array: MarkData[]) => {
+    //         value.parent = dataTree;
+    //         setParent(value);
+    //     });
+    // };
+    // setParent(treeData);
     return treeData;
 }
 
-export function saveTreeToFile(fileName : string, root : MarkDataTreeNode)
+export function saveTreeToFile(fileName : string, root : MarkData)
 {
     let str = markDataTreeToJson(root);
     fs.writeFileSync(fileName, str);
 }
 
-export function readTreeFromFile(fileName : string) : MarkDataTreeNode | null
+export function readTreeFromFile(fileName : string) : MarkData | null
 {
     let str = fs.readFileSync(fileName).toString();
     if (str) {
@@ -138,33 +251,4 @@ export function readTreeFromFile(fileName : string) : MarkDataTreeNode | null
     } else {
         return null;
     }
-}
-
-
-export class DepNodeProvider implements vscode.TreeDataProvider<MarkTreeItem> {
-
-	private _onDidChangeTreeData: vscode.EventEmitter<MarkTreeItem | undefined | void> = new vscode.EventEmitter<MarkTreeItem | undefined | void>();
-	readonly onDidChangeTreeData: vscode.Event<MarkTreeItem | undefined | void> = this._onDidChangeTreeData.event;
-
-    rootNode : MarkDataTreeNode;
-
-	constructor(rootNode: MarkDataTreeNode) {
-        this.rootNode = rootNode;
-	}
-
-	refresh(): void {
-		this._onDidChangeTreeData.fire();
-	}
-
-	getTreeItem(element: MarkTreeItem): vscode.TreeItem {
-		return element;
-	}
-
-	getChildren(element?: MarkTreeItem): Thenable<MarkTreeItem[]> {
-		if (element) {
-			return Promise.resolve(element.treeNode.getChildrenTreeItems());
-		} else {
-            return Promise.resolve(this.rootNode.getChildrenTreeItems());
-		}
-	}
 }
