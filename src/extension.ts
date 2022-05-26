@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as testdata from './core/testdata';
+import * as dataprovider from './core/dataprovider';
 import * as markoperator from './core/markoperator';
 import * as markdata from './core/markdata';
 
@@ -20,8 +20,13 @@ export function activate(context: vscode.ExtensionContext) {
         // The code you place here will be executed every time your command is executed
     }));
 
+    // 注册焦点切换事件
+    vscode.window.onDidChangeWindowState(markoperator.onWindowActive);
+    // 注册工程切换事件
+    vscode.workspace.onDidChangeWorkspaceFolders(markoperator.onChangeWorkspaceFolders);
+
     let treeView = vscode.window.createTreeView('cat-markview', {
-        treeDataProvider: testdata.provider,
+        treeDataProvider: dataprovider.getDataProvider(),
         showCollapseAll: true
     });
 
@@ -39,26 +44,34 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInputBox({ title: "Please enter a mark name." }).then((value: string | undefined) => {
             if (value !== undefined) {
                 let newNode = markdata.createFileMarkData(value, "null", uri.path, currentline);
-                markoperator.markCurrentLine(newNode, treeView.selection[0], testdata.provider);
+                markoperator.markCurrentLine(newNode, treeView.selection[0]);
             }
         });
     }));
 
 
     context.subscriptions.push(vscode.commands.registerCommand('catmark.deleteNode', (node: markdata.MarkData) => {
-        markoperator.deleteNode(node, testdata.provider);
+        markoperator.deleteNode(node);
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('catmark.createGroup', (node: markdata.MarkData) => {
         vscode.window.showInputBox({ title: "Please enter a group name." }).then((value: string | undefined) => {
             if (value) {
-                markoperator.createGroup(node, testdata.provider, value);
+                markoperator.createGroup(node, value);
             }
         });
     }));
 
-    // Display a message box to the user	});
+    context.subscriptions.push(vscode.commands.registerCommand('catmark.collapseAll', () => {
+        markdata.saveTreeToFile("g:\\code\\gymark\\catmark\\temp\\tets1.json", dataprovider.getDataProvider().getRootNode());
+        let testjson = markdata.readTreeFromFile("g:\\code\\gymark\\catmark\\temp\\tets1.json");
+        console.log(testjson);
+    }));
 
+
+    let resNode = markoperator.readData(true);
+    dataprovider.getDataProvider().setRootNode(resNode);
+    // Display a message box to the user	});
 }
 
 

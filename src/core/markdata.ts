@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
+import * as path from 'path';
 
 export enum MarkType {
     group = "group",
@@ -71,7 +72,21 @@ export class MarkData extends TreeNode {
     }
 
     createTreeItem() {
-        return new vscode.TreeItem(this.getName(), this.getCollapsibleState());
+        let treeItem = new vscode.TreeItem(this.getName(), this.getCollapsibleState());
+        let iconPath;
+        if (this.markType === MarkType.group) {
+            iconPath = {
+                light: path.join(__filename, '..', '..', '..', 'media', 'folder.svg'),
+                dark: path.join(__filename, '..', '..', '..', 'media', 'folder_dark.svg')
+            };
+        } else {
+            iconPath = {
+                light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
+                dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg')
+            };
+        }
+        treeItem.iconPath = iconPath;
+        return treeItem;
     }
 
     getName() {
@@ -157,56 +172,35 @@ export function createGroupMarkData(name : string): MarkData
     return data;
 }
 
-
-export class MarkDataProvider implements vscode.TreeDataProvider<MarkData> {
-
-    private _onDidChangeTreeData: vscode.EventEmitter<MarkData | undefined | void> = new vscode.EventEmitter<MarkData | undefined | void>();
-    readonly onDidChangeTreeData: vscode.Event<MarkData | undefined | void> = this._onDidChangeTreeData.event;
-
-    rootNode: MarkData;
-
-    constructor(rootNode: MarkData) {
-        this.rootNode = rootNode;
+function createMardDataByJSON(data : any): MarkData {
+    let res = new MarkData;
+    res.id = data.id;
+    res.markType = data.markType;
+    res.name = data.name;
+    res.comment = data.comment;
+    res.filePath = data.filePath;
+    res.line = data.line;
+    res.collapsibleState = data.collapsibleState;
+    res.contextValue = data.contextValue;
+    for(let child of data.children) {
+        let childNode = createMardDataByJSON(child);
+        res.addChild(childNode);
     }
-
-    getRootNode() {
-        return this.rootNode;
-    }
-
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
-    }
-
-    refreshNode(element : MarkData) {
-        this._onDidChangeTreeData.fire(element);
-    }
-
-    getTreeItem(element: MarkData): vscode.TreeItem {
-        let treeItem = element.createTreeItem();
-        return treeItem;
-    }
-
-    getChildren(element?: MarkData): Thenable<MarkData[]> {
-        if (element) {
-            let children  = element.getChildren() as MarkData[];
-            return Promise.resolve(children);
-        } else {
-            let children  = this.rootNode.getChildren() as MarkData[];
-            return Promise.resolve(children);
-        }
-    }
+    return res;
 }
+
+
 
 
 function markDataTreeToJson(root : MarkData) : string
 {
     return JSON.stringify(root, (key : string, value : any)=> {
-        if (key === "parent" || key === "treeItem") {
+        if (key === "parent") {
             return undefined;
         } else {
             return value;
         }
-    });
+    }, 4);
 }
 
 function jsonToMarkDataTree(data : string) : MarkData
@@ -221,19 +215,25 @@ function jsonToMarkDataTree(data : string) : MarkData
                 default :
                     return MarkType.group;
             }
+        // }
+        // else if (key === "collapsibleState") {
+        //     switch(value) {
+        //         case "None" :
+        //             return vscode.TreeItemCollapsibleState.None;
+        //         case "Collapsed" :
+        //             return vscode.TreeItemCollapsibleState.Collapsed;
+        //         case "Expanded" :
+        //             return vscode.TreeItemCollapsibleState.Expanded;
+        //         default :
+        //             return vscode.TreeItemCollapsibleState.None;
+        //     }
         } else {
             return value;
         }
     });
 
-    // let setParent = function(dataTree : MarkData) {
-    //     dataTree.children.forEach((value: MarkData, index: number, array: MarkData[]) => {
-    //         value.parent = dataTree;
-    //         setParent(value);
-    //     });
-    // };
-    // setParent(treeData);
-    return treeData;
+    let res = createMardDataByJSON(treeData);
+    return res;
 }
 
 export function saveTreeToFile(fileName : string, root : MarkData)
