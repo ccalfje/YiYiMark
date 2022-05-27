@@ -95,7 +95,7 @@ export class MarkData extends TreeNode {
         } else {
             iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
-                dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg')
+                dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg')
             };
         }
         treeItem.iconPath = iconPath;

@@ -62,17 +62,17 @@ function setSavedModifyDate(date: Date | null) {
 }
 
 function getConfigPath(): string {
-    let config = vscode.workspace.getConfiguration("catmark");
+    let config = vscode.workspace.getConfiguration("yiyimark");
     return config.DataSaveFilePath;
 }
 
 function getAutoSaveConfig(): boolean {
-    let config = vscode.workspace.getConfiguration("catmark");
+    let config = vscode.workspace.getConfiguration("yiyimark");
     return config.AutoSave;
 }
 
 function getAutoReadConfig(): boolean {
-    let config = vscode.workspace.getConfiguration("catmark");
+    let config = vscode.workspace.getConfiguration("yiyimark");
     return config.AutoReadChange;
 }
 
@@ -174,7 +174,7 @@ export function saveRoot(showInfo: boolean) {
 4.修改配置的时候
 5.在vscode中直接修改了数据文件 to do...
 */
-export function readData(showInfo: boolean): markdata.MarkData | null {
+function readData(showInfo: boolean): markdata.MarkData | null {
     let savePathRes = getSavePath();
     if (savePathRes.result === SavePathResType.ok) {
         // 更新时间戳
@@ -198,6 +198,12 @@ export function readData(showInfo: boolean): markdata.MarkData | null {
     }
 }
 
+export function reloadData(showInfo: boolean) {
+    console.log("reloadData!");
+    let resNode = readData(true);
+    dataprovider.getDataProvider().setRootNode(resNode);
+}
+
 export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markdata.MarkData): OperResult {
     let provider = dataprovider.getDataProvider();
     let parentNode = getParentGroup(selectedNode, provider);
@@ -208,16 +214,28 @@ export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markda
 }
 
 export function deleteNode(node: markdata.MarkData) {
-    let provider = dataprovider.getDataProvider();
     if (!node) {
         return;
     }
+    let provider = dataprovider.getDataProvider();
     let parent = node.getParent();
     if (parent) {
         parent.deleteChild(node);
         refreshNode(parent as markdata.MarkData, provider);
         saveRoot(true);
     }
+}
+
+export function editNode(node: markdata.MarkData) {
+    if (!node) {
+        return;
+    }
+    vscode.window.showInputBox({ title: "Please enter a mark name.", value:node.getName()}).then((value: string | undefined) => {
+        if (value !== undefined) {
+            node.setName(value);
+            dataprovider.getDataProvider().refreshNode(node);
+        }
+    });
 }
 
 export function createGroup(node: markdata.MarkData, groupName: string): OperResult {
@@ -342,7 +360,7 @@ export function onChangeWorkspaceFolders(event: vscode.WorkspaceFoldersChangeEve
 }
 
 export function onChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
-    if (event.affectsConfiguration("catmark")) {
+    if (event.affectsConfiguration("yiyimark")) {
         console.log("configuration changed:", event);
         let root = readData(true);
         dataprovider.getDataProvider().setRootNode(root);

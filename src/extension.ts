@@ -11,14 +11,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
-    console.log('Congratulations, your extension "catmark" is now active!');
+    console.log('Congratulations, your extension "yiyimark" is now active!');
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with registerCommand
     // The commandId parameter must match the command field in package.json
-    context.subscriptions.push(vscode.commands.registerCommand('catmark.helloWorld', () => {
-        // The code you place here will be executed every time your command is executed
-    }));
 
     // 注册焦点切换事件
     vscode.window.onDidChangeWindowState(markoperator.onWindowActive);
@@ -27,7 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
     // 注册配置更改事件
     vscode.workspace.onDidChangeConfiguration(markoperator.onChangeConfiguration);
 
-    let treeView = vscode.window.createTreeView('cat-markview', {
+    let treeView = vscode.window.createTreeView('yiyi-markview', {
         treeDataProvider: dataprovider.getDataProvider(),
         showCollapseAll: true,
         dragAndDropController: markoperator.getDragController()
@@ -35,9 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     treeView.onDidChangeSelection(markoperator.onTreeViewSelectionChanged);
 
-    context.subscriptions.push(vscode.commands.registerCommand('catmark.markCurrentLine', (uri: vscode.Uri) => {
-        vscode.window.showInformationMessage(`当前文件(夹)路径是：${uri ? uri.path : '空'}`);
-
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.markCurrentLine', (uri: vscode.Uri) => {
         let select = vscode.window.activeTextEditor?.selection;
         if (select === undefined) {
             return;
@@ -55,11 +50,15 @@ export function activate(context: vscode.ExtensionContext) {
     }));
 
 
-    context.subscriptions.push(vscode.commands.registerCommand('catmark.deleteNode', (node: markdata.MarkData) => {
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.deleteNode', (node: markdata.MarkData) => {
         markoperator.deleteNode(node);
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('catmark.createGroup', (node: markdata.MarkData) => {
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.editNode', (node: markdata.MarkData) => {
+        markoperator.editNode(node);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.createGroup', (node: markdata.MarkData) => {
         vscode.window.showInputBox({ title: "Please enter a group name." }).then((value: string | undefined) => {
             if (value) {
                 markoperator.createGroup(node, value);
@@ -67,16 +66,11 @@ export function activate(context: vscode.ExtensionContext) {
         });
     }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('catmark.collapseAll', () => {
-        markdata.saveTreeToFile("g:\\code\\gymark\\catmark\\temp\\tets1.json", dataprovider.getDataProvider().getRootNode());
-        let testjson = markdata.readTreeFromFile("g:\\code\\gymark\\catmark\\temp\\tets1.json");
-        console.log(testjson);
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.refresh', () => {
+        markoperator.reloadData(true);
     }));
 
-
-    let resNode = markoperator.readData(true);
-    dataprovider.getDataProvider().setRootNode(resNode);
-    // Display a message box to the user	});
+    markoperator.reloadData(true);
 }
 
 

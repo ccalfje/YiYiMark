@@ -1,36 +1,38 @@
 {
-    "name": "catmark",
-    "displayName": "CatMark",
-    "description": "",
-    "version": "0.0.1",
+    "name": "yiyimark",
+    "displayName": "YiYiMark",
+    "description": "Bookmark for Vs Code.",
+    "version": "0.0.2",
+    "author": {"name": "guoyu"},
     "engines": {
         "vscode": "^1.60.3"
     },
     "categories": [
         "Other"
     ],
+    "icon": "media/catpaw_dark.png",
     "activationEvents": [
-        "onCommand:catmark.helloWorld",
-        "onView:cat-markview",
-        "onCommand:catmark.markCurrentLine",
+        "onCommand:yiyimark.helloWorld",
+        "onView:yiyi-markview",
+        "onCommand:yiyimark.markCurrentLine",
         "workspaceContains:*.*"
     ],
     "main": "./out/extension.js",
     "contributes": {
         "configuration": {
-            "title": "catmark",
+            "title": "yiyimark",
             "properties": {
-                "catmark.DataSaveFilePath": {
+                "yiyimark.DataSaveFilePath": {
                     "type":"string",
                     "description": "The path to save mark data. If it's empty, data will be saved in file 'workspaceFolders/.vscode/markData.json'.",
                     "default": ""
                 },
-                "catmark.AutoSave": {
+                "yiyimark.AutoSave": {
                     "type":"boolean",
                     "description": "Controls auto save of mark data that have unsaved changes.",
                     "default": true
                 },
-                "catmark.AutoReadChange": {
+                "yiyimark.AutoReadChange": {
                     "type":"boolean",
                     "description": "Controls auto read of data that modified by other processes.",
                     "default": true
@@ -39,15 +41,11 @@
         },
         "commands": [
             {
-                "command": "catmark.helloWorld",
-                "title": "Hello World"
-            },
-            {
-                "command": "catmark.markCurrentLine",
+                "command": "yiyimark.markCurrentLine",
                 "title": "Mark Current Line"
             },
             {
-                "command": "catmark.deleteNode",
+                "command": "yiyimark.deleteNode",
                 "title": "Delete Node",
                 "icon": {
                     "dark": "media/delete_all_dark.svg",
@@ -55,33 +53,47 @@
                 }
             },
             {
-                "command": "catmark.createGroup",
+                "command": "yiyimark.editNode",
+                "title": "Edit Node",
+                "icon": {
+                    "dark": "media/edit_dark.svg",
+                    "light": "media/edit_light.svg"
+                }
+            },
+            {
+                "command": "yiyimark.createGroup",
                 "title": "Create Group",
-                "icon": "media/dep.svg"
+                "icon": {
+                    "dark": "media/folder_dark.svg",
+                    "light": "media/folder.svg"
+                }
             },
             {
-                "command": "catmark.collapseAll",
-                "title": "Collapse All Node",
-                "icon": "media/dep.svg"
+                "command": "yiyimark.refresh",
+                "title": "Refresh All Node, Reload Data.",
+                "icon": {
+                    "dark": "media/refresh_dark.svg",
+                    "light": "media/refresh_light.svg"
+                }
             },
             {
-                "command": "catmark.reloadData",
+                "command": "yiyimark.reloadData",
                 "title": "Reload saved mark data."
             }
         ],
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "cat-mark",
-                    "title": "Cat Mark",
+                    "id": "yiyi-mark",
+                    "title": "YiYi Mark",
                     "icon": "media/catpaw.svg"
                 }
             ]
         },
         "views": {
-            "cat-mark": [
+            "yiyi-mark": [
                 {
-                    "id": "cat-markview",
+                    "id": "yiyi-markview",
                     "name": "mark",
                     "icon": "media/dep.svg",
                     "contextualTitle": "mark"
@@ -92,35 +104,44 @@
             "editor/context": [
                 {
                     "when": "editorFocus",
-                    "command": "catmark.markCurrentLine",
+                    "command": "yiyimark.markCurrentLine",
                     "group": "navigation"
                 }
             ],
             "view/title": [
                 {
-                    "command": "catmark.createGroup",
-                    "when": "view == cat-markview",
+                    "command": "yiyimark.createGroup",
+                    "when": "view == yiyi-markview",
                     "group": "navigation"
                 },
                 {
-                    "command": "catmark.collapseAll",
-                    "when": "view == cat-markview",
+                    "command": "yiyimark.refresh",
+                    "when": "view == yiyi-markview",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
-                    "command": "catmark.deleteNode",
-                    "when": "view == cat-markview",
+                    "command": "yiyimark.deleteNode",
+                    "when": "view == yiyi-markview",
                     "group": "inline"
                 },
                 {
-                    "command": "catmark.deleteNode",
-                    "when": "view == cat-markview"
+                    "command": "yiyimark.deleteNode",
+                    "when": "view == yiyi-markview"
                 },
                 {
-                    "command": "catmark.createGroup",
-                    "when": "view == cat-markview"
+                    "command": "yiyimark.editNode",
+                    "when": "view == yiyi-markview",
+                    "group": "inline"
+                },
+                {
+                    "command": "yiyimark.editNode",
+                    "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.createGroup",
+                    "when": "view == yiyi-markview"
                 }
             ]
         }
