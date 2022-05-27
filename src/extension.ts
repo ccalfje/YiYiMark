@@ -24,10 +24,13 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.onDidChangeWindowState(markoperator.onWindowActive);
     // 注册工程切换事件
     vscode.workspace.onDidChangeWorkspaceFolders(markoperator.onChangeWorkspaceFolders);
+    // 注册配置更改事件
+    vscode.workspace.onDidChangeConfiguration(markoperator.onChangeConfiguration);
 
     let treeView = vscode.window.createTreeView('cat-markview', {
         treeDataProvider: dataprovider.getDataProvider(),
-        showCollapseAll: true
+        showCollapseAll: true,
+        dragAndDropController: markoperator.getDragController()
     });
 
     treeView.onDidChangeSelection(markoperator.onTreeViewSelectionChanged);
@@ -41,9 +44,11 @@ export function activate(context: vscode.ExtensionContext) {
         }
         let currentline = select.active.line;
 
+        let relativePath = vscode.workspace.asRelativePath(uri);
+
         vscode.window.showInputBox({ title: "Please enter a mark name." }).then((value: string | undefined) => {
             if (value !== undefined) {
-                let newNode = markdata.createFileMarkData(value, "null", uri.path, currentline);
+                let newNode = markdata.createFileMarkData(value, "null", relativePath, currentline);
                 markoperator.markCurrentLine(newNode, treeView.selection[0]);
             }
         });

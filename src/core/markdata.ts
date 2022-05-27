@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
+import exp = require('constants');
 
 export enum MarkType {
     group = "group",
@@ -22,7 +23,7 @@ export class TreeNode {
     }
 
     insertChild(child : TreeNode, index : number) {
-        if (index <= this.children.length) {
+        if (index <= this.children.length && index >=0) {
             this.children.splice(index, 0, child);
             child.parent = this;
         }
@@ -45,8 +46,20 @@ export class TreeNode {
         }
     }
 
-    getIndex(node : TreeNode) {
+    isRootNode() : boolean {
+        return this.parent === null;
+    }
 
+    indexOf() {
+        if (!this.parent) {
+            return -1;
+        }
+        for (let i = 0; i <= this.parent.children.length; ++i) {
+            if (this === this.parent.children[i]) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     traverseNode(opfun : (node : TreeNode) => any) {
@@ -151,6 +164,48 @@ export class MarkData extends TreeNode {
     contextValue = 'dependency';
 }
 
+export function isMarkDataEqual(root1: MarkData, root2: MarkData) {
+    //1.如果是比较对象===，返回true
+    if (root1 === root2) {
+        return true;
+    } 
+
+    if (isDataEqual(root1, root2)) {
+        if (root1.getChildren().length !== root2.getChildren().length) {
+            return false;
+        } else {
+            for (let i = 0; i <= root1.getChildren().length; ++i) {
+                if (!isMarkDataEqual(root1.getChildren()[i] as MarkData, root2.getChildren()[i] as MarkData)) {
+                    return false;
+                }
+            }
+        }
+    } else {
+        return false;
+    }
+    return true;
+}
+
+function isDataEqual(root1 : MarkData, root2: MarkData) {
+    const obj1Props = Object.getOwnPropertyNames(root1);
+    const obj2Props = Object.getOwnPropertyNames(root2);
+    if(obj1Props.length !== obj2Props.length) {
+        return false;
+    }
+    return (obj1Props.every((prop) => { 
+        if (prop === "children" || prop === "parent") {
+            return true;
+        }
+        let prop0 = prop as keyof MarkData;
+        let value = root1[prop0];
+        if (typeof value !== "function") {
+            return value === root2[prop0];
+        } else {
+            return true;
+        }
+    }));
+}
+
 export function createFileMarkData(name : string, comment : string, filePath : string, line : number) : MarkData
 {
     let data = new MarkData;
@@ -167,6 +222,15 @@ export function createGroupMarkData(name : string): MarkData
 {
     let data = new MarkData;
     data.setName(name);
+    data.setMarkType(MarkType.group);
+    data.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
+    return data;
+}
+
+export function createRootMarkData(): MarkData
+{
+    let data = new MarkData;
+    data.setName("root");
     data.setMarkType(MarkType.group);
     data.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
     return data;

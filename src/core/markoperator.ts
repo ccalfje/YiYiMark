@@ -51,27 +51,27 @@ function getProjectPath() {
     }
 }
 
-let gMDate : Date | null = null;
+let gMDate: Date | null = null;
 
 function getSavedModifyDate() {
     return gMDate;
 }
 
-function setSavedModifyDate(date : Date | null) {
+function setSavedModifyDate(date: Date | null) {
     gMDate = date;
 }
 
-function getConfigPath() : string {
+function getConfigPath(): string {
     let config = vscode.workspace.getConfiguration("catmark");
     return config.DataSaveFilePath;
 }
 
-function getAutoSaveConfig() : boolean {
+function getAutoSaveConfig(): boolean {
     let config = vscode.workspace.getConfiguration("catmark");
     return config.AutoSave;
 }
 
-function getAutoReadConfig() : boolean {
+function getAutoReadConfig(): boolean {
     let config = vscode.workspace.getConfiguration("catmark");
     return config.AutoReadChange;
 }
@@ -84,11 +84,11 @@ enum SavePathResType {
 }
 
 interface SavePathResult {
-    result : SavePathResType,
-    resPath : string,
+    result: SavePathResType,
+    resPath: string,
 }
 
-function getFileModifyDate(path : string) {
+function getFileModifyDate(path: string) {
     try {
         let stat = fs.statSync(path);
         if (stat.isFile()) {
@@ -101,15 +101,15 @@ function getFileModifyDate(path : string) {
     return null;
 }
 
-function getSavePath() : SavePathResult {
+function getSavePath(): SavePathResult {
     let path = getConfigPath();
     if (path === "") {
         let proPath = getProjectPath();
         if (proPath === "") {
             console.log(__filename, "get project path failed");
-            return { result : SavePathResType.getProjectPathFailed, resPath: path};
+            return { result: SavePathResType.getProjectPathFailed, resPath: path };
         } else {
-            return { result : SavePathResType.ok, resPath: proPath + "\\.vscode\\markData.json"};
+            return { result: SavePathResType.ok, resPath: proPath + "\\.vscode\\markData.json" };
         }
     } else {
         let exist = fs.existsSync(path);
@@ -117,25 +117,25 @@ function getSavePath() : SavePathResult {
             try {
                 let stat = fs.statSync(path);
                 if (stat.isDirectory()) {
-                    return { result : SavePathResType.ok, resPath: path + "\\markData.json"};
+                    return { result: SavePathResType.ok, resPath: path + "\\markData.json" };
                 } else if (stat.isFile()) {
-                    return { result : SavePathResType.ok, resPath: path };
+                    return { result: SavePathResType.ok, resPath: path };
                 } else {
                     console.log(__filename, "save path is invalid type");
-                    return { result : SavePathResType.pathInvalid, resPath: path };
+                    return { result: SavePathResType.pathInvalid, resPath: path };
                 }
             } catch {
                 console.log(__filename, "save path does not exist. catch error");
-                return { result : SavePathResType.pathNotExist, resPath: path };
+                return { result: SavePathResType.pathNotExist, resPath: path };
             }
         } else {
             console.log(__filename, "save path does not exist");
-            return { result : SavePathResType.pathNotExist, resPath: path };
+            return { result: SavePathResType.pathNotExist, resPath: path };
         }
     }
 }
 
-function saveData(root: markdata.MarkData, showInfo : boolean) {
+function saveData(root: markdata.MarkData, showInfo: boolean) {
     let savePathRes = getSavePath();
     if (savePathRes.result === SavePathResType.ok) {
         // 更新时间戳
@@ -159,13 +159,22 @@ function saveData(root: markdata.MarkData, showInfo : boolean) {
     }
 }
 
+export function saveRoot(showInfo: boolean) {
+    if (getAutoSaveConfig()) {
+        saveData(dataprovider.getDataProvider().getRootNode(), showInfo);
+    }
+}
+
+
 /*
 读文件时机：
 1.插件加载时
 2.焦点切换回来的时候，如果文件有变化，需要重新读取
 3.打开工程时，如果保存目录是相对目录，也需要重新加载
+4.修改配置的时候
+5.在vscode中直接修改了数据文件 to do...
 */
-export function readData(showInfo : boolean) : markdata.MarkData | null {
+export function readData(showInfo: boolean): markdata.MarkData | null {
     let savePathRes = getSavePath();
     if (savePathRes.result === SavePathResType.ok) {
         // 更新时间戳
@@ -194,9 +203,7 @@ export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markda
     let parentNode = getParentGroup(selectedNode, provider);
     parentNode.addChild(newNode);
     refreshNode(parentNode, provider);
-    if (getAutoSaveConfig()) {
-        saveData(provider.getRootNode(), true);
-    }
+    saveRoot(true);
     return { result: true };
 }
 
@@ -209,9 +216,7 @@ export function deleteNode(node: markdata.MarkData) {
     if (parent) {
         parent.deleteChild(node);
         refreshNode(parent as markdata.MarkData, provider);
-        if (getAutoSaveConfig()) {
-            saveData(provider.getRootNode(), true);
-        }
+        saveRoot(true);
     }
 }
 
@@ -241,9 +246,7 @@ export function createGroup(node: markdata.MarkData, groupName: string): OperRes
     parentNode.addChild(newGroupNode);
 
     refreshNode(parentNode, provider);
-    if (getAutoSaveConfig()) {
-        saveData(provider.getRootNode(), true);
-    }
+    saveRoot(true);
     return { result: true };
 }
 
@@ -260,18 +263,31 @@ export async function moveToNodeLoc(node: markdata.MarkData) {
     let line = node.getLineNum();
     const newSelection = new vscode.Selection(line, 0, line, 0);
 
-    let textEdit = await vscode.window.showTextDocument(vscode.Uri.file(node.getFilePath()));
+    let filePath = vscode.Uri.file(node.getFilePath()).fsPath;
 
-    textEdit.selection = newSelection;
-    textEdit.revealRange(newSelection, reviewType);
+    let proPath = getProjectPath();
+    // 判断是绝对路径还是相对路径
+    if (!filePath.includes(proPath)) {
+        // 这里的相对路径没办法支持打开多个工程的情况
+        filePath = getProjectPath() + filePath;
+    }
+
+    try {
+        let textEdit = await vscode.window.showTextDocument(vscode.Uri.file(filePath));
+        textEdit.selection = newSelection;
+        textEdit.revealRange(newSelection, reviewType);
+    } catch (error) {
+        console.log("moveToNodeLoc:showTextDocument error:", error);
+        return;
+    }
 }
 
 export function onTreeViewSelectionChanged(node: vscode.TreeViewSelectionChangeEvent<markdata.MarkData>) {
     moveToNodeLoc(node.selection[0]);
 }
 
-async function getInputBoolean(promptStr : string) : Promise<boolean> {
-    let validateFun = (value : string)=> {
+async function getInputBoolean(promptStr: string): Promise<boolean> {
+    let validateFun = (value: string) => {
         if (value !== 'y' && value !== 'n') {
             return "y/n";
         } else {
@@ -279,7 +295,7 @@ async function getInputBoolean(promptStr : string) : Promise<boolean> {
         }
     };
 
-    let value = await vscode.window.showInputBox({placeHolder: "y/n", prompt: promptStr , validateInput : validateFun});
+    let value = await vscode.window.showInputBox({ placeHolder: "y/n", prompt: promptStr, validateInput: validateFun });
     if (value !== 'y') {
         return false;
     } else {
@@ -288,34 +304,110 @@ async function getInputBoolean(promptStr : string) : Promise<boolean> {
 }
 
 export async function onWindowActive(state: vscode.WindowState) {
-    console.log("state in:", state);
+    console.log("window state in:", state);
     let res = getSavePath();
     if (res.result !== SavePathResType.ok) {
         console.log("onWindowActive", "get save path failed.");
         return;
     }
     let mDate = getFileModifyDate(res.resPath);
-    if (mDate) {
-        let savedMDate = getSavedModifyDate();
-        if (!savedMDate) {
-            console.log("onWindowActive ", "error : get save date failed.");
-            return;
-        }
-        // 数据文件比现有数据更新，需要考虑重新读取数据
-        if (mDate > savedMDate) {
+    if (!mDate) {
+        return;
+    }
+
+    let savedMDate = getSavedModifyDate();
+    if (!savedMDate) {
+        console.log("onWindowActive ", "error : get save date failed.");
+        return;
+    }
+    // 数据文件比现有数据更新，需要考虑重新读取数据
+    if (mDate > savedMDate) {
+        let newRoot = readData(true);
+        // 新旧数据不一致时，才需要更新
+        if (newRoot && !markdata.isMarkDataEqual(newRoot, dataprovider.getDataProvider().getRootNode())) {
             let promptStr = `File "${res.resPath} has bend modified, reload now?(y/n)`;
             if (getAutoReadConfig() || await getInputBoolean(promptStr)) {
-                let root = readData(true);
-                if (root) {
-                    dataprovider.getDataProvider().setRootNode(root);
+                if (newRoot) {
+                    dataprovider.getDataProvider().setRootNode(newRoot);
                 }
-            } 
+            }
         }
     }
 }
 
-export function onChangeWorkspaceFolders(event : vscode.WorkspaceFoldersChangeEvent) {
+export function onChangeWorkspaceFolders(event: vscode.WorkspaceFoldersChangeEvent) {
+    console.log("workspace changed:", event);
     let root = readData(true);
     dataprovider.getDataProvider().setRootNode(root);
-    console.log("workspace changed:", event);
+}
+
+export function onChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
+    if (event.affectsConfiguration("catmark")) {
+        console.log("configuration changed:", event);
+        let root = readData(true);
+        dataprovider.getDataProvider().setRootNode(root);
+    }
+}
+
+class DragAndDropController implements vscode.TreeDragAndDropController<markdata.MarkData> {
+    readonly dropMimeTypes: readonly string[] = ["markdatatype"];
+    readonly dragMimeTypes: readonly string[] = ["markdatatype"];
+    handleDrag(source: readonly markdata.MarkData[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Thenable<void> | void {
+        console.log("darg in");
+        if (source.length >= 1) {
+            dataTransfer.set("MarkDataType", new vscode.DataTransferItem(source[0].getName()));
+            this.dragData = source[0];
+        }
+        // dataTransfer.set("MarkDataType", new vscode.DataTransferItem(source[0]));
+    }
+
+    handleDrop(target: markdata.MarkData | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Thenable<void> | void {
+        console.log("drop in");
+        let mimeData = dataTransfer.get("MarkDataType")?.value;
+        if (mimeData && this.dragData && this.dragData.getName() === mimeData) {
+            if (target) {
+                let oldParent = this.dragData.getParent();
+                if (oldParent) {
+                    if (target.getMarkType() === markdata.MarkType.group) {
+                        oldParent.deleteChild(this.dragData);
+                        target.addChild(this.dragData);
+                        dataprovider.getDataProvider().refresh();
+                        this.dragData = null;
+                        saveRoot(true);
+                    } else {
+                        let newParent = target.getParent();
+                        if (newParent) {
+                            let tarIndex = target.indexOf();
+                            if (tarIndex === -1) {
+                                return;
+                            }
+                            oldParent.deleteChild(this.dragData);
+                            newParent.insertChild(this.dragData, target.indexOf());
+                            dataprovider.getDataProvider().refresh();
+                            this.dragData = null;
+                            saveRoot(true);
+                        }
+                    }
+                }
+            } else { // root
+                let oldParent = this.dragData.getParent();
+                // 根节点下的子节点移动到根节点，不做处理
+                if (oldParent && !oldParent.isRootNode()) {
+                    oldParent.deleteChild(this.dragData);
+                    let root = dataprovider.getDataProvider().getRootNode();
+                    root.addChild(this.dragData);
+                    dataprovider.getDataProvider().refresh();
+                    this.dragData = null;
+                    saveRoot(true);
+                }
+            }
+        }
+    }
+
+    dragData : markdata.MarkData | null = null;
+}
+
+let dragController = new DragAndDropController;
+export function getDragController() {
+    return dragController;
 }

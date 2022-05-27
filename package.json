@@ -33,7 +33,7 @@
                 "catmark.AutoReadChange": {
                     "type":"boolean",
                     "description": "Controls auto read of data that modified by other processes.",
-                    "default": false
+                    "default": true
                 }
             }
         },
