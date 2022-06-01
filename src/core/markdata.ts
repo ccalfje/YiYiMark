@@ -17,19 +17,25 @@ export class TreeNode {
         return this.children;
     }
 
-    addChild(child : TreeNode) {
+    addChild(child: TreeNode) {
         this.children.push(child);
         child.parent = this;
     }
 
-    insertChild(child : TreeNode, index : number) {
-        if (index <= this.children.length && index >=0) {
+    setChild(child: TreeNode, index: number) {
+        if (index >= 0 && index < this.children.length) {
+            this.children[index] = child;
+        }
+    }
+
+    insertChild(child: TreeNode, index: number) {
+        if (index <= this.children.length && index >= 0) {
             this.children.splice(index, 0, child);
             child.parent = this;
         }
     }
 
-    deleteChildByIndex(index : number) {
+    deleteChildByIndex(index: number) {
         if (index < this.children.length) {
             let child = this.children[index];
             this.children.splice(index, 1);
@@ -37,7 +43,7 @@ export class TreeNode {
         }
     }
 
-    deleteChild(node : TreeNode) {
+    deleteChild(node: TreeNode) {
         for (let i = 0; i <= this.children.length; ++i) {
             if (node === this.children[i]) {
                 this.children.splice(i, 1);
@@ -46,7 +52,7 @@ export class TreeNode {
         }
     }
 
-    isRootNode() : boolean {
+    isRootNode(): boolean {
         return this.parent === null;
     }
 
@@ -62,7 +68,7 @@ export class TreeNode {
         return -1;
     }
 
-    traverseNode(opfun : (node : TreeNode) => any) {
+    traverseNode(opfun: (node: TreeNode) => any) {
         opfun(this);
         this.children.forEach(element => {
             element.traverseNode(opfun);
@@ -70,13 +76,13 @@ export class TreeNode {
     }
 
     // 由子类实现
-    isEqual(node : TreeNode) : boolean {
+    isEqual(node: TreeNode): boolean {
         return this.parent === node.parent;
     }
 
 
-    parent : TreeNode | null = null;
-    children : TreeNode[] = [];
+    parent: TreeNode | null = null;
+    children: TreeNode[] = [];
 }
 
 export class MarkData extends TreeNode {
@@ -105,43 +111,42 @@ export class MarkData extends TreeNode {
     getName() {
         return this.name;
     }
-    setName(name : string) {
+    setName(name: string) {
         this.name = name;
     }
 
     getFilePath() {
         return this.filePath;
     }
-    setFilePath(filePath : string) {
+    setFilePath(filePath: string) {
         this.filePath = filePath;
     }
 
     getComment() {
         return this.comment;
     }
-    setComment(comment : string) {
+    setComment(comment: string) {
         this.comment = comment;
     }
 
     getLineNum() {
         return this.line;
     }
-    setLineNum(line : number) {
+    setLineNum(line: number) {
         this.line = line;
     }
 
     getMarkType() {
         return this.markType;
     }
-    setMarkType(type : MarkType) {
+    setMarkType(type: MarkType) {
         this.markType = type;
     }
 
-    getCollapsibleState() : vscode.TreeItemCollapsibleState
-    {
+    getCollapsibleState(): vscode.TreeItemCollapsibleState {
         return this.collapsibleState;
     }
-    setCollapsibleState(state : vscode.TreeItemCollapsibleState) {
+    setCollapsibleState(state: vscode.TreeItemCollapsibleState) {
         if (this.markType === MarkType.file) {
             return;
         } else if (this.markType === MarkType.group) {
@@ -153,13 +158,13 @@ export class MarkData extends TreeNode {
         }
     }
 
-    id : string = ""; // 唯一编号
-    markType : MarkType = MarkType.file;
-    name : string = "";
-    comment : string = ""; // 对该书签的详细描述
-    filePath : string = ""; 
-    line : number = 0;
-    collapsibleState : vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None;
+    id: string = ""; // 唯一编号
+    markType: MarkType = MarkType.file;
+    name: string = "";
+    comment: string = ""; // 对该书签的详细描述
+    filePath: string = "";
+    line: number = 0;
+    collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None;
 
     contextValue = 'dependency';
 }
@@ -168,7 +173,7 @@ export function isMarkDataEqual(root1: MarkData, root2: MarkData) {
     //1.如果是比较对象===，返回true
     if (root1 === root2) {
         return true;
-    } 
+    }
 
     if (isDataEqual(root1, root2)) {
         if (root1.getChildren().length !== root2.getChildren().length) {
@@ -186,13 +191,13 @@ export function isMarkDataEqual(root1: MarkData, root2: MarkData) {
     return true;
 }
 
-function isDataEqual(root1 : MarkData, root2: MarkData) {
+function isDataEqual(root1: MarkData, root2: MarkData) {
     const obj1Props = Object.getOwnPropertyNames(root1);
     const obj2Props = Object.getOwnPropertyNames(root2);
-    if(obj1Props.length !== obj2Props.length) {
+    if (obj1Props.length !== obj2Props.length) {
         return false;
     }
-    return (obj1Props.every((prop) => { 
+    return (obj1Props.every((prop) => {
         if (prop === "children" || prop === "parent") {
             return true;
         }
@@ -206,8 +211,7 @@ function isDataEqual(root1 : MarkData, root2: MarkData) {
     }));
 }
 
-export function createFileMarkData(name : string, comment : string, filePath : string, line : number) : MarkData
-{
+export function createFileMarkData(name: string, comment: string, filePath: string, line: number): MarkData {
     let data = new MarkData;
     data.setName(name);
     data.setComment(comment);
@@ -218,8 +222,7 @@ export function createFileMarkData(name : string, comment : string, filePath : s
     return data;
 }
 
-export function createGroupMarkData(name : string): MarkData
-{
+export function createGroupMarkData(name: string): MarkData {
     let data = new MarkData;
     data.setName(name);
     data.setMarkType(MarkType.group);
@@ -227,8 +230,7 @@ export function createGroupMarkData(name : string): MarkData
     return data;
 }
 
-export function createRootMarkData(): MarkData
-{
+export function createRootMarkData(): MarkData {
     let data = new MarkData;
     data.setName("root");
     data.setMarkType(MarkType.group);
@@ -236,7 +238,7 @@ export function createRootMarkData(): MarkData
     return data;
 }
 
-function createMardDataByJSON(data : any): MarkData {
+function createMardDataByJSON(data: any): MarkData {
     let res = new MarkData;
     res.id = data.id;
     res.markType = data.markType;
@@ -246,7 +248,7 @@ function createMardDataByJSON(data : any): MarkData {
     res.line = data.line;
     res.collapsibleState = data.collapsibleState;
     res.contextValue = data.contextValue;
-    for(let child of data.children) {
+    for (let child of data.children) {
         let childNode = createMardDataByJSON(child);
         res.addChild(childNode);
     }
@@ -256,9 +258,8 @@ function createMardDataByJSON(data : any): MarkData {
 
 
 
-function markDataTreeToJson(root : MarkData) : string
-{
-    return JSON.stringify(root, (key : string, value : any)=> {
+function markDataTreeToJson(root: MarkData): string {
+    return JSON.stringify(root, (key: string, value: any) => {
         if (key === "parent") {
             return undefined;
         } else {
@@ -267,30 +268,29 @@ function markDataTreeToJson(root : MarkData) : string
     }, 4);
 }
 
-function jsonToMarkDataTree(data : string) : MarkData
-{
-    let treeData = JSON.parse(data, (key : string, value : any) => {
+function jsonToMarkDataTree(data: string): MarkData {
+    let treeData = JSON.parse(data, (key: string, value: any) => {
         if (key === "markType") {
-            switch(value) {
-                case "group" :
+            switch (value) {
+                case "group":
                     return MarkType.group;
-                case "file" :
+                case "file":
                     return MarkType.file;
-                default :
+                default:
                     return MarkType.group;
             }
-        // }
-        // else if (key === "collapsibleState") {
-        //     switch(value) {
-        //         case "None" :
-        //             return vscode.TreeItemCollapsibleState.None;
-        //         case "Collapsed" :
-        //             return vscode.TreeItemCollapsibleState.Collapsed;
-        //         case "Expanded" :
-        //             return vscode.TreeItemCollapsibleState.Expanded;
-        //         default :
-        //             return vscode.TreeItemCollapsibleState.None;
-        //     }
+            // }
+            // else if (key === "collapsibleState") {
+            //     switch(value) {
+            //         case "None" :
+            //             return vscode.TreeItemCollapsibleState.None;
+            //         case "Collapsed" :
+            //             return vscode.TreeItemCollapsibleState.Collapsed;
+            //         case "Expanded" :
+            //             return vscode.TreeItemCollapsibleState.Expanded;
+            //         default :
+            //             return vscode.TreeItemCollapsibleState.None;
+            //     }
         } else {
             return value;
         }
@@ -300,14 +300,12 @@ function jsonToMarkDataTree(data : string) : MarkData
     return res;
 }
 
-export function saveTreeToFile(fileName : string, root : MarkData)
-{
+export function saveTreeToFile(fileName: string, root: MarkData) {
     let str = markDataTreeToJson(root);
     fs.writeFileSync(fileName, str);
 }
 
-export function readTreeFromFile(fileName : string) : MarkData | null
-{
+export function readTreeFromFile(fileName: string): MarkData | null {
     let str = fs.readFileSync(fileName).toString();
     if (str) {
         let tree = jsonToMarkDataTree(str);

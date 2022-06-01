@@ -234,8 +234,147 @@ export function editNode(node: markdata.MarkData) {
         if (value !== undefined) {
             node.setName(value);
             dataprovider.getDataProvider().refreshNode(node);
+            saveRoot(true);
         }
     });
+}
+
+export function moveUpNode(currentNode: markdata.MarkData) {
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return;
+    }
+
+    let parent = currentNode.getParent();
+    if (!parent) {
+        return;
+    }
+
+    if (index >= 1 && index < parent.getChildren().length) {
+        let upNode = parent.getChildren()[index - 1];
+        parent.setChild(currentNode, index - 1);
+        parent.setChild(upNode, index);
+        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        saveRoot(true);
+    } 
+}
+
+export function moveDownNode(currentNode: markdata.MarkData) {
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return;
+    }
+
+    let parent = currentNode.getParent();
+    if (!parent) {
+        return;
+    }
+
+    if (index < parent.getChildren().length - 1 && index >= 0) {
+        let downNode = parent.getChildren()[index + 1];
+        parent.setChild(currentNode, index + 1);
+        parent.setChild(downNode, index);
+        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        saveRoot(true);
+    } 
+}
+
+export function moveLeftNode(currentNode: markdata.MarkData) {
+    let parent = currentNode.getParent();
+    if (!parent) {
+        return;
+    }
+
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return;
+    }
+
+    let grandParent = parent.getParent();
+    if (!grandParent) {
+        return;
+    }
+
+    parent.deleteChild(currentNode);
+    grandParent.insertChild(currentNode, parent.indexOf());
+    refreshNode(grandParent as markdata.MarkData, dataprovider.getDataProvider());
+    saveRoot(true);
+}
+
+export function moveRightNode(currentNode: markdata.MarkData) {
+    let parent = currentNode.getParent();
+    if (!parent) {
+        return;
+    }
+
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return;
+    }
+
+    let brothers = parent.getChildren();
+
+    let obj = -1;
+    let curLen = brothers.length;
+
+    for (let i = 0; i < brothers.length; ++i) {
+        let node = brothers[i] as markdata.MarkData;
+        if (node.getMarkType() === markdata.MarkType.group && i !== index) {
+            let len = Math.abs(i - index);
+            if (len < curLen) {
+                obj = i;
+                curLen = len;
+            }
+        }
+    }
+
+    if (obj !== -1) {
+        brothers[obj].addChild(currentNode);
+        parent.deleteChild(currentNode);
+        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        saveRoot(true);
+    }
+
+}
+
+export function getNextNodeInGroup(currentNode: markdata.MarkData) {
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return currentNode;
+    }
+
+    let nodeArr = currentNode.getParent()?.getChildren();
+    if (!nodeArr) {
+        return currentNode;
+    }
+    index++;
+
+    let res; 
+    do { 
+        res = nodeArr[index % nodeArr.length] as markdata.MarkData;
+        index++;
+    } while(res.getMarkType() === markdata.MarkType.group && res !== currentNode);
+    return res;
+}
+
+export function getPreivousNodeInGroup(currentNode: markdata.MarkData) {
+    let index = currentNode.indexOf();
+    if (index === -1) {
+        return currentNode;
+    }
+
+    let nodeArr = currentNode.getParent()?.getChildren();
+    if (!nodeArr) {
+        return currentNode;
+    }
+    index = index + nodeArr.length - 1;
+
+    let res; 
+    do { 
+        res = nodeArr[index % nodeArr.length] as markdata.MarkData;
+        index--;
+    } while(res.getMarkType() === markdata.MarkType.group && res !== currentNode);
+    return res;
 }
 
 export function createGroup(node: markdata.MarkData, groupName: string): OperResult {
@@ -304,7 +443,7 @@ export function onTreeViewSelectionChanged(node: vscode.TreeViewSelectionChangeE
     moveToNodeLoc(node.selection[0]);
 }
 
-async function getInputBoolean(promptStr: string): Promise<boolean> {
+export async function getInputBoolean(promptStr: string): Promise<boolean> {
     let validateFun = (value: string) => {
         if (value !== 'y' && value !== 'n') {
             return "y/n";
