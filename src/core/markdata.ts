@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import exp = require('constants');
+import { isArray } from 'util';
 
 export enum MarkType {
     group = "group",
@@ -94,18 +95,22 @@ export class MarkData extends TreeNode {
         let treeItem = new vscode.TreeItem(this.getName(), this.getCollapsibleState());
         let iconPath;
         if (this.markType === MarkType.group) {
-            iconPath = {
+            treeItem.iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'folder.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'folder_dark.svg')
             };
         } else {
-            iconPath = {
+            treeItem.iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg')
             };
+            treeItem.tooltip = this.filePath + ":" + this.line;
         }
-        treeItem.iconPath = iconPath;
         return treeItem;
+    }
+
+    getId() {
+        return this.id;
     }
 
     getName() {
@@ -156,6 +161,10 @@ export class MarkData extends TreeNode {
                 this.collapsibleState = state;
             }
         }
+    }
+
+    getContextValue() {
+        return this.contextValue;
     }
 
     id: string = ""; // 唯一编号
@@ -238,7 +247,22 @@ export function createRootMarkData(): MarkData {
     return data;
 }
 
-function createMardDataByJSON(data: any): MarkData {
+function markDataToObj(data: MarkData) : any {
+    let obj = {
+        "id": data.getId(),
+        "markType": data.getMarkType(),
+        "name": data.getName(),
+        "comment": data.getComment(),
+        "filePath": data.getFilePath(),
+        "line": data.getLineNum(),
+        "collapsibleState": data.getCollapsibleState(),
+        "contextValue": data.getContextValue(),
+        "children": data.getChildren().map(value=> markDataToObj(value as MarkData))
+    };
+    return obj;
+}
+
+function createMarkDataByJSON(data: any): MarkData {
     let res = new MarkData;
     res.id = data.id;
     res.markType = data.markType;
@@ -249,17 +273,19 @@ function createMardDataByJSON(data: any): MarkData {
     res.collapsibleState = data.collapsibleState;
     res.contextValue = data.contextValue;
     for (let child of data.children) {
-        let childNode = createMardDataByJSON(child);
+        let childNode = createMarkDataByJSON(child);
         res.addChild(childNode);
+    }
+    // 修复数据被错误修改的情况
+    if (Array.isArray(data.children) && data.children.length !== 0) {
+        res.markType = MarkType.group;
+        res.collapsibleState = res.collapsibleState === vscode.TreeItemCollapsibleState.None ? vscode.TreeItemCollapsibleState.Expanded : res.collapsibleState;
     }
     return res;
 }
 
-
-
-
 function markDataTreeToJson(root: MarkData): string {
-    return JSON.stringify(root, (key: string, value: any) => {
+    return JSON.stringify(markDataToObj(root), (key: string, value: any) => {
         if (key === "parent") {
             return undefined;
         } else {
@@ -296,7 +322,7 @@ function jsonToMarkDataTree(data: string): MarkData {
         }
     });
 
-    let res = createMardDataByJSON(treeData);
+    let res = createMarkDataByJSON(treeData);
     return res;
 }
 

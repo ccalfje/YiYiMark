@@ -2,7 +2,7 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "guoyu",
     "author": {
         "name": "guoyu"
@@ -37,6 +37,11 @@
                 "yiyimark.AutoReadChange": {
                     "type": "boolean",
                     "description": "Controls auto read of data that modified by other processes.",
+                    "default": true
+                },
+                "yiyimark.RenderLine": {
+                    "type": "boolean",
+                    "description": "Controls render an icon before the mark line.",
                     "default": true
                 }
             }
@@ -125,6 +130,18 @@
                     "dark": "media/arrow-right-dark.svg",
                     "light": "media/arrow-right.svg"
                 }
+            },
+            {
+                "command": "yiyimark.opengroup",
+                "title": "YiYiMark:OpenGroup"
+            },
+            {
+                "command": "yiyimark.export",
+                "title": "YiYiMark:Export"
+            },
+            {
+                "command": "yiyimark.import",
+                "title": "YiYiMark:Import"
             }
         ],
         "keybindings": [
@@ -158,9 +175,8 @@
             "yiyi-mark": [
                 {
                     "id": "yiyi-markview",
-                    "name": "mark",
-                    "icon": "media/dep.svg",
-                    "contextualTitle": "mark"
+                    "name": "",
+                    "icon": "media/dep.svg"
                 }
             ]
         },
@@ -175,11 +191,6 @@
             "view/title": [
                 {
                     "command": "yiyimark.createGroup",
-                    "when": "view == yiyi-markview",
-                    "group": "navigation"
-                },
-                {
-                    "command": "yiyimark.refresh",
                     "when": "view == yiyi-markview",
                     "group": "navigation"
                 },
@@ -202,6 +213,18 @@
                     "command": "yiyimark.moveright",
                     "when": "view == yiyi-markview",
                     "group": "navigation"
+                },
+                {
+                    "command": "yiyimark.refresh",
+                    "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.export",
+                    "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.import",
+                    "when": "view == yiyi-markview"
                 }
             ],
             "view/item/context": [
@@ -225,6 +248,14 @@
                 },
                 {
                     "command": "yiyimark.createGroup",
+                    "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.opengroup",
+                    "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.import",
                     "when": "view == yiyi-markview"
                 }
             ]

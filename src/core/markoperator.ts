@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { pathToFileURL } from 'url';
 import * as fs from 'fs';
 import * as dataprovider from './dataprovider';
+import exp = require('constants');
 
 export enum OperErrorType {
     reduplicateName,
@@ -12,18 +13,6 @@ export enum OperErrorType {
 export interface OperResult {
     result: boolean,
     errorType?: OperErrorType
-}
-
-function refreshNode(parentNode: markdata.MarkData, provider: dataprovider.MarkDataProvider) {
-    if (parentNode) {
-        let grandParent = parentNode.getParent();
-        if (grandParent) {
-            provider.refreshNode(parentNode);
-        } else {
-            // 根节点
-            provider.refresh();
-        }
-    }
 }
 
 function getParentGroup(node: markdata.MarkData, provider: dataprovider.MarkDataProvider): markdata.MarkData {
@@ -109,7 +98,16 @@ function getSavePath(): SavePathResult {
             console.log(__filename, "get project path failed");
             return { result: SavePathResType.getProjectPathFailed, resPath: path };
         } else {
-            return { result: SavePathResType.ok, resPath: proPath + "\\.vscode\\markData.json" };
+            let resDir = proPath + "\\.vscode";
+            if (!fs.existsSync(resDir)) {
+                fs.mkdirSync(resDir);
+            }
+
+            let resPath = proPath + "\\.vscode\\markData.json";
+            if (!fs.existsSync(resPath)) {
+                fs.writeFileSync(resPath, "");
+            }
+            return { result: SavePathResType.ok, resPath: resPath };
         }
     } else {
         let exist = fs.existsSync(path);
@@ -165,6 +163,47 @@ export function saveRoot(showInfo: boolean) {
     }
 }
 
+export function exportNode(node: markdata.MarkData) {
+    vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(getProjectPath()),
+        filters: {
+            'JSON': ['json']
+        }
+    }).then((value: vscode.Uri | undefined) => {
+        if (value) {
+            markdata.saveTreeToFile(value.fsPath, node);
+        }
+
+    });
+}
+
+export function importNode(parentNode: markdata.MarkData) {
+    vscode.window.showOpenDialog({
+        defaultUri: vscode.Uri.file(getProjectPath()),
+        canSelectFiles: true,
+        canSelectFolders: false,
+        canSelectMany: true,
+        filters: {
+            'JSON': ['json']
+        }
+    }).then((value: vscode.Uri[] | undefined) => {
+        if (value && value.length !== 0) {
+            if (!parentNode.isRootNode() && parentNode.getMarkType() !== markdata.MarkType.group) {
+                parentNode = parentNode.getParent() as markdata.MarkData;
+            }
+            for (let uri of value) {
+                let newNode = markdata.readTreeFromFile(uri.fsPath);
+                if (newNode) {
+                    parentNode.addChild(newNode);
+                }
+            }
+            dataprovider.getDataProvider().refreshNode(parentNode);
+            saveRoot(true);
+        }
+
+    });
+}
+
 
 /*
 读文件时机：
@@ -208,7 +247,7 @@ export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markda
     let provider = dataprovider.getDataProvider();
     let parentNode = getParentGroup(selectedNode, provider);
     parentNode.addChild(newNode);
-    refreshNode(parentNode, provider);
+    provider.notifyAddNode(newNode);
     saveRoot(true);
     return { result: true };
 }
@@ -221,7 +260,7 @@ export function deleteNode(node: markdata.MarkData) {
     let parent = node.getParent();
     if (parent) {
         parent.deleteChild(node);
-        refreshNode(parent as markdata.MarkData, provider);
+        provider.notifyRemoveNode(node, parent as markdata.MarkData);
         saveRoot(true);
     }
 }
@@ -230,10 +269,10 @@ export function editNode(node: markdata.MarkData) {
     if (!node) {
         return;
     }
-    vscode.window.showInputBox({ title: "Please enter a mark name.", value:node.getName()}).then((value: string | undefined) => {
+    vscode.window.showInputBox({ title: "Please enter a mark name.", value: node.getName() }).then((value: string | undefined) => {
         if (value !== undefined) {
             node.setName(value);
-            dataprovider.getDataProvider().refreshNode(node);
+            dataprovider.getDataProvider().notifyEditNode(node);
             saveRoot(true);
         }
     });
@@ -254,9 +293,9 @@ export function moveUpNode(currentNode: markdata.MarkData) {
         let upNode = parent.getChildren()[index - 1];
         parent.setChild(currentNode, index - 1);
         parent.setChild(upNode, index);
-        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        dataprovider.getDataProvider().refreshNode(parent as markdata.MarkData);
         saveRoot(true);
-    } 
+    }
 }
 
 export function moveDownNode(currentNode: markdata.MarkData) {
@@ -274,9 +313,9 @@ export function moveDownNode(currentNode: markdata.MarkData) {
         let downNode = parent.getChildren()[index + 1];
         parent.setChild(currentNode, index + 1);
         parent.setChild(downNode, index);
-        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        dataprovider.getDataProvider().refreshNode(parent as markdata.MarkData);
         saveRoot(true);
-    } 
+    }
 }
 
 export function moveLeftNode(currentNode: markdata.MarkData) {
@@ -297,7 +336,7 @@ export function moveLeftNode(currentNode: markdata.MarkData) {
 
     parent.deleteChild(currentNode);
     grandParent.insertChild(currentNode, parent.indexOf());
-    refreshNode(grandParent as markdata.MarkData, dataprovider.getDataProvider());
+    dataprovider.getDataProvider().refreshNode(grandParent as markdata.MarkData);
     saveRoot(true);
 }
 
@@ -331,7 +370,7 @@ export function moveRightNode(currentNode: markdata.MarkData) {
     if (obj !== -1) {
         brothers[obj].addChild(currentNode);
         parent.deleteChild(currentNode);
-        refreshNode(parent as markdata.MarkData, dataprovider.getDataProvider());
+        dataprovider.getDataProvider().refreshNode(parent as markdata.MarkData);
         saveRoot(true);
     }
 
@@ -349,11 +388,11 @@ export function getNextNodeInGroup(currentNode: markdata.MarkData) {
     }
     index++;
 
-    let res; 
-    do { 
+    let res;
+    do {
         res = nodeArr[index % nodeArr.length] as markdata.MarkData;
         index++;
-    } while(res.getMarkType() === markdata.MarkType.group && res !== currentNode);
+    } while (res.getMarkType() === markdata.MarkType.group && res !== currentNode);
     return res;
 }
 
@@ -369,11 +408,11 @@ export function getPreivousNodeInGroup(currentNode: markdata.MarkData) {
     }
     index = index + nodeArr.length - 1;
 
-    let res; 
-    do { 
+    let res;
+    do {
         res = nodeArr[index % nodeArr.length] as markdata.MarkData;
         index--;
-    } while(res.getMarkType() === markdata.MarkType.group && res !== currentNode);
+    } while (res.getMarkType() === markdata.MarkType.group && res !== currentNode);
     return res;
 }
 
@@ -401,10 +440,23 @@ export function createGroup(node: markdata.MarkData, groupName: string): OperRes
 
     let newGroupNode = markdata.createGroupMarkData(groupName);
     parentNode.addChild(newGroupNode);
-
-    refreshNode(parentNode, provider);
+    provider.notifyAddNode(newGroupNode);
     saveRoot(true);
     return { result: true };
+}
+
+export function openGroup(node: markdata.MarkData) {
+    if (node.getMarkType() === markdata.MarkType.group || node.isRootNode()) {
+        let children = node.getChildren();
+        for (let child of children) {
+            moveToNodeLoc(child as markdata.MarkData);
+        }
+    } else {
+        let parent = node.getParent();
+        if (parent) {
+            openGroup(parent as markdata.MarkData);
+        }
+    }
 }
 
 // 跳转到书签记录的位置
@@ -433,7 +485,8 @@ export async function moveToNodeLoc(node: markdata.MarkData) {
         let textEdit = await vscode.window.showTextDocument(vscode.Uri.file(filePath));
         textEdit.selection = newSelection;
         textEdit.revealRange(newSelection, reviewType);
-    } catch (error) {
+    } catch (error: any) {
+        vscode.window.showInformationMessage(error.message);
         console.log("moveToNodeLoc:showTextDocument error:", error);
         return;
     }
@@ -525,6 +578,10 @@ class DragAndDropController implements vscode.TreeDragAndDropController<markdata
             if (target) {
                 let oldParent = this.dragData.getParent();
                 if (oldParent) {
+                    if (target === this.dragData) {
+                        this.dragData = null;
+                        return;
+                    }
                     if (target.getMarkType() === markdata.MarkType.group) {
                         oldParent.deleteChild(this.dragData);
                         target.addChild(this.dragData);
@@ -539,7 +596,7 @@ class DragAndDropController implements vscode.TreeDragAndDropController<markdata
                                 return;
                             }
                             oldParent.deleteChild(this.dragData);
-                            newParent.insertChild(this.dragData, target.indexOf());
+                            newParent.insertChild(this.dragData, tarIndex);
                             dataprovider.getDataProvider().refresh();
                             this.dragData = null;
                             saveRoot(true);
@@ -561,7 +618,7 @@ class DragAndDropController implements vscode.TreeDragAndDropController<markdata
         }
     }
 
-    dragData : markdata.MarkData | null = null;
+    dragData: markdata.MarkData | null = null;
 }
 
 let dragController = new DragAndDropController;
