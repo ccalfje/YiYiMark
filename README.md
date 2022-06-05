@@ -1,21 +1,32 @@
 # YiYiMark
 Bookmark for Vs Code
 
+YiYiMark supports tagging code for quick jumping between locations. It also allows you to export your own bookmarks and share them for others to use.
+YiYiMark takes into account cases where multiple VsCode instances open projects that need to share the same bookmarks (e.g. downloading different branches of the same repository into separate folders), so it uses relative paths and does not support multiple folders in one workspace.
+
+* Here are some of the features that YiYiMark provides:
+* Grouping
+* Drag and Drop (requires VsCode version > 1.64)
+* Fuzzy search
+* Import and export
+* Save data files in Json format
+* Open all files in the same group
+
 ![YiYiMark](https://github.com/ccalfje/YiYiMark/blob/master/readme_media/feature.gif)
 
 ## Features
 
-* 不支持同一个VsCode打开多project的情况
+* Does not support multiple folders in one workspace
 
-* 支持分组标签
+* Group 
 ![group](https://github.com/ccalfje/YiYiMark/blob/master/readme_media/group.png)
 
-* 模糊搜索
+* Fuzzy Search
 YiYiMark:Search
 ![search](https://github.com/ccalfje/YiYiMark/blob/master/readme_media/search.png)
 
-* 导入导出
+* import and export bookmark
 ![import](https://github.com/ccalfje/YiYiMark/blob/master/readme_media/importexport.png)
 
-* 多VsCode工程共享
+* Support different projects to share the same bootkmark data 
 ![mutiprojectonedata](https://github.com/ccalfje/YiYiMark/blob/master/readme_media/mutiprojectonedata.png)
