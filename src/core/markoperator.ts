@@ -10,19 +10,14 @@ export enum OperErrorType {
     noCurrentLine
 }
 
-export interface OperResult {
-    result: boolean,
-    errorType?: OperErrorType
-}
-
-function getParentGroup(node: markdata.MarkData, provider: dataprovider.MarkDataProvider): markdata.MarkData {
-    let parentNode: markdata.MarkData;
+function findGroupNode(node: markdata.MarkData, provider: dataprovider.MarkDataProvider): markdata.MarkData | null {
+    let parentNode: markdata.MarkData | null;
     if (!node) {
         parentNode = provider.getRootNode();
     } else if (node.getMarkType() === markdata.MarkType.group) {
         parentNode = node;
     } else {
-        parentNode = node.getParent() as markdata.MarkData;
+        parentNode = node.getParent() as markdata.MarkData | null;
     }
     return parentNode;
 }
@@ -243,13 +238,14 @@ export function reloadData(showInfo: boolean) {
     dataprovider.getDataProvider().setRootNode(resNode);
 }
 
-export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markdata.MarkData): OperResult {
+export function markCurrentLine(newNode: markdata.MarkData, selectedNode: markdata.MarkData) {
     let provider = dataprovider.getDataProvider();
-    let parentNode = getParentGroup(selectedNode, provider);
-    parentNode.addChild(newNode);
-    provider.notifyAddNode(newNode);
-    saveRoot(true);
-    return { result: true };
+    let parentNode = findGroupNode(selectedNode, provider);
+    if (parentNode) {
+        parentNode.addChild(newNode);
+        provider.notifyAddNode(newNode);
+        saveRoot(true);
+    }
 }
 
 export function deleteNode(node: markdata.MarkData) {
@@ -416,33 +412,15 @@ export function getPreivousNodeInGroup(currentNode: markdata.MarkData) {
     return res;
 }
 
-export function createGroup(node: markdata.MarkData, groupName: string): OperResult {
+export function createGroup(node: markdata.MarkData, groupName: string) {
     let provider = dataprovider.getDataProvider();
-    let checkName = function (node: markdata.MarkData, name: string) {
-        let children = node.getChildren();
-        if (children.length === 0) {
-            return true;
-        }
-        for (const child of children) {
-            let childNode = child as markdata.MarkData;
-            if (childNode.getMarkType() === markdata.MarkType.group && childNode.getName() === name) {
-                return false;
-            }
-        }
-        return true;
-
-    };
-
-    let parentNode = getParentGroup(node, provider);
-    if (!checkName(parentNode, groupName)) {
-        return { result: false, errorType: OperErrorType.reduplicateName };
+    let parentNode = findGroupNode(node, provider);
+    if (parentNode) {
+        let newGroupNode = markdata.createGroupMarkData(groupName);
+        parentNode.addChild(newGroupNode);
+        provider.notifyAddNode(newGroupNode);
+        saveRoot(true);
     }
-
-    let newGroupNode = markdata.createGroupMarkData(groupName);
-    parentNode.addChild(newGroupNode);
-    provider.notifyAddNode(newGroupNode);
-    saveRoot(true);
-    return { result: true };
 }
 
 export function openGroup(node: markdata.MarkData) {

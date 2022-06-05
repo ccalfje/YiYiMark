@@ -2,6 +2,7 @@
 Bookmark for Vs Code
 
 YiYiMark supports tagging code for quick jumping between locations. It also allows you to export your own bookmarks and share them for others to use.
+
 YiYiMark takes into account cases where multiple VsCode instances open projects that need to share the same bookmarks (e.g. downloading different branches of the same repository into separate folders), so it uses relative paths and does not support multiple folders in one workspace.
 
 * Here are some of the features that YiYiMark provides:

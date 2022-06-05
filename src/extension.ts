@@ -102,6 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 
     context.subscriptions.push(vscode.commands.registerCommand('yiyimark.createGroup', (node: markdata.MarkData) => {
+        node = node || treeView.selection[0] || dataprovider.getDataProvider().getRootNode();
         vscode.window.showInputBox({ title: "Please enter a group name." }).then((value: string | undefined) => {
             if (value) {
                 markoperator.createGroup(node, value);
