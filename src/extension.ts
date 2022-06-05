@@ -43,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showInformationMessage(`Please select a node first.`);
             return;
         }
-        if (node.getMarkType() === markdata.MarkType.group) {
+        if (node.getMarkType() === markdata.MarkType.group && node.getChildren().length !== 0) {
             markoperator.getInputBoolean("This is a group. Are you sure want to delete?").then((value : boolean) => {
                 if (value) {
                     markoperator.deleteNode(node);
