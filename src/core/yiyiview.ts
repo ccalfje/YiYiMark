@@ -35,15 +35,38 @@ export class YiYiView {
     }
 
     onDidAddNode(node: markdata.MarkData) {
-
+        let editor = this.findNodeEditor(node);
+        if (editor) {
+            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+        }
     }
 
     onDidRemoveNode(node: markdata.MarkData) {
-
+        let editor = this.findNodeEditor(node);
+        if (editor) {
+            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+        }
     }
 
     onDidEditNode(node: markdata.MarkData) {
+        let editor = this.findNodeEditor(node);
+        if (editor) {
+            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+        }
+    }
 
+    private findNodeEditor(node: markdata.MarkData) {
+        if (!node) {
+            return null;
+        }
+        let textEditors = vscode.window.visibleTextEditors;
+        for (let editor of textEditors) {
+            let relativePath = vscode.workspace.asRelativePath(editor.document.uri);
+            if (relativePath === node.getFilePath()) {
+                return editor;
+            }
+        }
+        return null;
     }
 
     onDidChangeChangeVisibleTextEditors(editors: readonly vscode.TextEditor[]) {
@@ -56,34 +79,46 @@ export class YiYiView {
             let textEditors = vscode.window.visibleTextEditors;
             let fileNodeMap = this.dataProvider.getFileNodeMap();
             for (let editor of textEditors) {
-                let relativePath = vscode.workspace.asRelativePath(editor.document.uri);
-                let res = fileNodeMap.get(relativePath);
-                if (res) {
-                    let lines = res.map(value => value.getLineNum());
-                    this.renderLines(editor, lines);
-                }
+                this.renderOneEditorLines(editor, fileNodeMap);
             }
         }
     }
 
+    renderOneEditorLines(editor: vscode.TextEditor, fileNodeMap: Map<string, markdata.MarkData[]>) {
+        let relativePath = vscode.workspace.asRelativePath(editor.document.uri);
+        let res = fileNodeMap.get(relativePath);
+        if (res) {
+            let lines = res.map(value => value.getLineNum());
+            this.renderLines(editor, lines);
+        }
+    }
+
     renderLines(editor: vscode.TextEditor, lines: number[]) {
-        const decorationOptions: vscode.DecorationRenderOptions = {
-            light: {
-                gutterIconPath: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
-                gutterIconSize: "80%"
-            },
-            dark: {
-                gutterIconPath: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg'),
-                gutterIconSize: "80%"
-            },
-        };
-        let decoration = vscode.window.createTextEditorDecorationType(decorationOptions);
         let ranges = lines.map(line => {
             const start = new vscode.Position(line, 0);
             const end = new vscode.Position(line, 0);
             return new vscode.Range(start, end);
         });
-        editor.setDecorations(decoration, ranges);
+        editor.setDecorations(this.getDecorationType(editor), ranges);
+    }
+
+    private getDecorationType(editor: vscode.TextEditor) {
+        let decoration = this.editorDecorMap.get(editor);
+        if (!decoration) {
+            const decorationOptions: vscode.DecorationRenderOptions = {
+                light: {
+                    gutterIconPath: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
+                    gutterIconSize: "80%"
+                },
+                dark: {
+                    gutterIconPath: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg'),
+                    gutterIconSize: "80%"
+                },
+            };
+            decoration = vscode.window.createTextEditorDecorationType(decorationOptions);
+            this.editorDecorMap.set(editor, decoration);
+        }
+        return decoration;
     }
 
 
@@ -94,4 +129,5 @@ export class YiYiView {
 
     private dataProvider: dataprovider.MarkDataProvider;
     private treeView: vscode.TreeView<markdata.MarkData>;
+    private editorDecorMap: Map<vscode.TextEditor, vscode.TextEditorDecorationType> = new Map;
 }
