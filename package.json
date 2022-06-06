@@ -2,10 +2,10 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.0.4",
-    "publisher": "guoyu",
+    "version": "0.0.5",
+    "publisher": "ccalfje",
     "author": {
-        "name": "guoyu"
+        "name": "ccalfje"
     },
     "engines": {
         "vscode": "^1.60.3"
@@ -13,6 +13,10 @@
     "categories": [
         "Other"
     ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ccalfje/YiYiMark"
+    },
     "icon": "media/catpaw_dark.png",
     "activationEvents": [
         "onView:yiyi-markview",
