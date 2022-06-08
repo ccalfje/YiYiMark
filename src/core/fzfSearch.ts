@@ -16,7 +16,7 @@ export class FzfSearch {
             if (str !== '') {
                 await this.searchCLi(str);
             } else {
-                this.clear();
+                this.restoreItems();
             }
         };
         this.setOnDidChangeValue(searchFun);
@@ -32,6 +32,10 @@ export class FzfSearch {
 
     updateItems(items: vscode.QuickPickItem[]) {
         this.quickPick.items = items;
+    }
+
+    restoreItems() {
+        this.updateItems(this.iniQuickItems);
     }
 
     clear() {
@@ -105,7 +109,7 @@ export class FzfSearch {
         let res0 = [] as fzf.FzfResultItem<markdata.MarkData>[];
         for (let i = 0; i < this.fzfGetListSize(); ++i) {
             if (this.getCurrentSearchStr() === '') {
-                this.updateItems([]); // clear
+                this.restoreItems();
                 break;
             } else if (str === this.getCurrentSearchStr()) {
                 // 持续更新
@@ -172,10 +176,27 @@ export class FzfSearch {
         return pro;
     }
 
-    getSearchResFormUI() {
+    getSearchResFormUI(initNodes: markdata.MarkData[] | undefined) {
         this.quickPick.value = "";
+        this.iniQuickItems = [];
+        // 初始化候选项
+        if (initNodes && initNodes.length !== 0) {
+            let quickItems = [];
+            for (let i = 0; i < initNodes.length && i < 15; i++) {
+                quickItems.push({
+                    label: initNodes[i].getName(),
+                    description: initNodes[i].getFilePath(),
+                    alwaysShow: true,
+                    markdata: initNodes[i]
+                });
+            }
+            this.updateItems(quickItems);
+            this.iniQuickItems = quickItems;
+        }
         this.show();
     }
+
+    iniQuickItems: vscode.QuickPickItem[] = [];
 
     curretnStr: string = "";
 

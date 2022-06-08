@@ -1,9 +1,3 @@
 # Change Log
 
-All notable changes to the "catmark" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
-
-- Initial release
+* 0.0.7 Fix the path error of linux system

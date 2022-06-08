@@ -2,6 +2,7 @@ import * as markdata from './markdata';
 import * as vscode from 'vscode';
 import { pathToFileURL } from 'url';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as dataprovider from './dataprovider';
 import exp = require('constants');
 
@@ -86,44 +87,44 @@ function getFileModifyDate(path: string) {
 }
 
 function getSavePath(): SavePathResult {
-    let path = getConfigPath();
-    if (path === "") {
+    let configPath = getConfigPath();
+    if (configPath === "") {
         let proPath = getProjectPath();
         if (proPath === "") {
             console.log(__filename, "get project path failed");
-            return { result: SavePathResType.getProjectPathFailed, resPath: path };
+            return { result: SavePathResType.getProjectPathFailed, resPath: configPath };
         } else {
-            let resDir = proPath + "\\.vscode";
+            let resDir = path.join(proPath, ".vscode");
             if (!fs.existsSync(resDir)) {
                 fs.mkdirSync(resDir);
             }
 
-            let resPath = proPath + "\\.vscode\\markData.json";
+            let resPath = path.join(proPath, ".vscode", "markData.json");
             if (!fs.existsSync(resPath)) {
                 fs.writeFileSync(resPath, "");
             }
             return { result: SavePathResType.ok, resPath: resPath };
         }
     } else {
-        let exist = fs.existsSync(path);
+        let exist = fs.existsSync(configPath);
         if (exist) {
             try {
-                let stat = fs.statSync(path);
+                let stat = fs.statSync(configPath);
                 if (stat.isDirectory()) {
-                    return { result: SavePathResType.ok, resPath: path + "\\markData.json" };
+                    return { result: SavePathResType.ok, resPath: path.join(configPath, "markData.json") };
                 } else if (stat.isFile()) {
-                    return { result: SavePathResType.ok, resPath: path };
+                    return { result: SavePathResType.ok, resPath: configPath };
                 } else {
                     console.log(__filename, "save path is invalid type");
-                    return { result: SavePathResType.pathInvalid, resPath: path };
+                    return { result: SavePathResType.pathInvalid, resPath: configPath };
                 }
             } catch {
                 console.log(__filename, "save path does not exist. catch error");
-                return { result: SavePathResType.pathNotExist, resPath: path };
+                return { result: SavePathResType.pathNotExist, resPath: configPath };
             }
         } else {
             console.log(__filename, "save path does not exist");
-            return { result: SavePathResType.pathNotExist, resPath: path };
+            return { result: SavePathResType.pathNotExist, resPath: configPath };
         }
     }
 }

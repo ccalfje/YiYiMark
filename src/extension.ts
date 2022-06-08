@@ -144,9 +144,16 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(vscode.commands.registerCommand('yiyimark.search', () => {
+        let uri = vscode.window.activeTextEditor?.document.uri;
+        let initNodes: markdata.MarkData[] | undefined = undefined;
+        if (uri) {
+            let relativePath = vscode.workspace.asRelativePath(uri);
+            initNodes = dataprovider.getDataProvider().getFileNodeMap().get(relativePath);
+        }
+
         vscode.commands.executeCommand("workbench.view.extension.yiyi-mark").then(()=>{
             fzfUI.fzfInit(dataprovider.getDataProvider().getNodeList());
-            fzfUI.getSearchResFormUI();
+            fzfUI.getSearchResFormUI(initNodes);
         });
     }));
 
