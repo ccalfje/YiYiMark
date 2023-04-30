@@ -21,7 +21,7 @@ export class YiYiView {
         // 注册配置更改事件
         vscode.workspace.onDidChangeConfiguration(markoperator.onChangeConfiguration);
         // treeView的select事件
-        this.treeView.onDidChangeSelection(markoperator.onTreeViewSelectionChanged);
+        // this.treeView.onDidChangeSelection(markoperator.onTreeViewSelectionChanged);
 
         this.dataProvider.onDidAddNode(this.onDidAddNode.bind(this));
         this.dataProvider.onDidRemoveNode(this.onDidRemoveNode.bind(this));
@@ -37,21 +37,21 @@ export class YiYiView {
     onDidAddNode(node: markdata.MarkData) {
         let editor = this.findNodeEditor(node);
         if (editor) {
-            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+            this.renderOneEditorLines(editor);
         }
     }
 
     onDidRemoveNode(node: markdata.MarkData) {
         let editor = this.findNodeEditor(node);
         if (editor) {
-            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+            this.renderOneEditorLines(editor);
         }
     }
 
     onDidEditNode(node: markdata.MarkData) {
         let editor = this.findNodeEditor(node);
         if (editor) {
-            this.renderOneEditorLines(editor, this.dataProvider.getFileNodeMap());
+            this.renderOneEditorLines(editor);
         }
     }
 
@@ -77,16 +77,15 @@ export class YiYiView {
         let renderLine = vscode.workspace.getConfiguration('yiyimark').get('renderLine', true);
         if (renderLine) {
             let textEditors = vscode.window.visibleTextEditors;
-            let fileNodeMap = this.dataProvider.getFileNodeMap();
             for (let editor of textEditors) {
-                this.renderOneEditorLines(editor, fileNodeMap);
+                this.renderOneEditorLines(editor);
             }
         }
     }
 
-    renderOneEditorLines(editor: vscode.TextEditor, fileNodeMap: Map<string, markdata.MarkData[]>) {
+    renderOneEditorLines(editor: vscode.TextEditor) {
         let relativePath = vscode.workspace.asRelativePath(editor.document.uri);
-        let res = fileNodeMap.get(relativePath);
+        let res = this.dataProvider.getFileNodeList(relativePath);
         if (res) {
             let lines = res.map(value => value.getLineNum());
             this.renderLines(editor, lines);

@@ -104,8 +104,13 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
         return this.nodeList;
     }
 
-    getFileNodeMap(): Map<string, markdata.MarkData[]> {
+    private getFileNodeMap(): Map<string, markdata.MarkData[]> {
         return this.fileNodeMap;
+    }
+
+    getFileNodeList(path : string) : readonly markdata.MarkData[] | undefined {
+        let res = this.fileNodeMap.get(path);
+        return res;
     }
 
     private updateFileNodeMap(root: markdata.MarkData | null) {

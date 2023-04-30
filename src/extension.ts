@@ -6,6 +6,7 @@ import * as markoperator from './core/markoperator';
 import * as markdata from './core/markdata';
 import * as fzfsearch from './core/fzfSearch';
 import * as yiyiview from './core/yiyiview';
+import * as hover from './core/hover';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, your extension "yiyimark" is now active!');
@@ -30,7 +31,13 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.window.showInputBox({ title: "Please enter a mark name." }).then((value: string | undefined) => {
             if (value !== undefined) {
-                let newNode = markdata.createFileMarkData(value, "null", relativePath, currentline);
+                let comment = vscode.window.activeTextEditor?.document.lineAt(currentline).text;
+                if (!comment) {
+                    comment = "";
+                } else {
+                    comment = comment.trim();
+                }
+                let newNode = markdata.createFileMarkData(value, comment, relativePath, currentline);
                 markoperator.markCurrentLine(newNode, treeView.selection[0]);
             }
         });
@@ -145,10 +152,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.commands.registerCommand('yiyimark.search', () => {
         let uri = vscode.window.activeTextEditor?.document.uri;
-        let initNodes: markdata.MarkData[] | undefined = undefined;
+        let initNodes: readonly markdata.MarkData[] | undefined = undefined;
         if (uri) {
             let relativePath = vscode.workspace.asRelativePath(uri);
-            initNodes = dataprovider.getDataProvider().getFileNodeMap().get(relativePath);
+            initNodes = dataprovider.getDataProvider().getFileNodeList(relativePath);
         }
 
         vscode.commands.executeCommand("workbench.view.extension.yiyi-mark").then(()=>{
@@ -182,8 +189,23 @@ export function activate(context: vscode.ExtensionContext) {
         markoperator.importNode(node);
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.jump', (node: markdata.MarkData) => {
+        node = node || treeView.selection[0] || dataprovider.getDataProvider().getRootNode();
+        if (!node) {
+            return;
+        }
+        markoperator.moveToNodeLoc(node);
+    }));
+
     markoperator.reloadData(true);
     view.renderAllNodeLines();
+
+	// 注册鼠标悬停提示
+	context.subscriptions.push(vscode.languages.registerHoverProvider(
+    { scheme: 'file', pattern: '**' },
+    {
+		provideHover : hover.provideHover
+	}));
 }
 
 

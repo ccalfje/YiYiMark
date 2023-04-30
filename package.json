@@ -2,7 +2,7 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "publisher": "ccalfje",
     "author": {
         "name": "ccalfje"
@@ -46,6 +46,11 @@
                 "yiyimark.RenderLine": {
                     "type": "boolean",
                     "description": "Controls render an icon before the mark line.",
+                    "default": true
+                },
+                "yiyimark.Hover": {
+                    "type": "boolean",
+                    "description": "Whether to show hover tips.",
                     "default": true
                 }
             }
@@ -146,6 +151,10 @@
             {
                 "command": "yiyimark.import",
                 "title": "YiYiMark:Import"
+            },
+            {
+                "command": "yiyimark.jump",
+                "title": "YiYiMark:Jump"
             }
         ],
         "keybindings": [

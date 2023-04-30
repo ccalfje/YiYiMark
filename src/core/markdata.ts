@@ -104,8 +104,9 @@ export class MarkData extends TreeNode {
                 light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg')
             };
-            treeItem.tooltip = this.filePath + ":" + this.line;
+            treeItem.tooltip = this.filePath + ":" + this.line + ` \n` + this.comment;
         }
+        treeItem.command = {title: "Jump", command: "yiyimark.jump", arguments:[this]};
         return treeItem;
     }
 

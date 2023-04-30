@@ -176,7 +176,7 @@ export class FzfSearch {
         return pro;
     }
 
-    getSearchResFormUI(initNodes: markdata.MarkData[] | undefined) {
+    getSearchResFormUI(initNodes: readonly markdata.MarkData[] | undefined) {
         this.quickPick.value = "";
         this.iniQuickItems = [];
         // 初始化候选项
