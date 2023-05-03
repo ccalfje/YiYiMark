@@ -61,6 +61,15 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.editNodeName', (node: markdata.MarkData) => {
+        node = node || treeView.selection[0];
+        if (!node) {
+            vscode.window.showInformationMessage(`Please select a node first.`);
+            return;
+        }
+        markoperator.editNodeName(node);
+    }));
+
     context.subscriptions.push(vscode.commands.registerCommand('yiyimark.editNode', (node: markdata.MarkData) => {
         node = node || treeView.selection[0];
         if (!node) {

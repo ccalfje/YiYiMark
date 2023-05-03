@@ -93,19 +93,23 @@ export class MarkData extends TreeNode {
 
     createTreeItem() {
         let treeItem = new vscode.TreeItem(this.getName(), this.getCollapsibleState());
-        let iconPath;
+
         if (this.markType === MarkType.group) {
             treeItem.iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'folder.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'folder_dark.svg')
             };
-            treeItem.tooltip = this.getComment() + '\n' + this.getCreateDate();
+            treeItem.tooltip = `Comment : ${this.getComment() || ''}\n
+Date: ${this.getCreateDate() || ''}`;
         } else {
             treeItem.iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg')
             };
-            treeItem.tooltip = this.getFilePath() + ":" + this.getLineNum() + ` \n` + this.getComment() + '\n' + this.getCreateDate();
+            treeItem.tooltip = new vscode.MarkdownString(
+                `Loc : ${this.getFilePath() + ":" + (this.getDisplayLineNum())}\n
+Comment : ${this.getComment() || ''}\n
+Date : ${this.getCreateDate() || ''}`);
         }
         treeItem.command = {title: "Jump", command: "yiyimark.jump", arguments:[this]};
         return treeItem;
@@ -135,11 +139,18 @@ export class MarkData extends TreeNode {
     setComment(comment: string) {
         this.comment = comment;
     }
-
+    // zero based line num
     getLineNum() {
         return this.line;
     }
+    getDisplayLineNum() {
+        return this.line + 1;
+    }
     setLineNum(line: number) {
+        if (isNaN(line)) {
+            console.log(`Error, Invalid line num: ${line}`);
+            return;
+        }
         this.line = line;
     }
 

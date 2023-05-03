@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as dataprovider from './dataprovider';
 import exp = require('constants');
+import * as nodeEditor from './editnodewebview';
 
 export enum OperErrorType {
     reduplicateName,
@@ -262,17 +263,28 @@ export function deleteNode(node: markdata.MarkData) {
     }
 }
 
-export function editNode(node: markdata.MarkData) {
+export function editNodeName(node: markdata.MarkData) {
     if (!node) {
         return;
     }
     vscode.window.showInputBox({ title: "Please enter a mark name.", value: node.getName() }).then((value: string | undefined) => {
         if (value !== undefined) {
             node.setName(value);
-            dataprovider.getDataProvider().notifyEditNode(node);
-            saveRoot(true);
+            updateNode(node);
         }
     });
+}
+
+export function updateNode(node: markdata.MarkData) {
+    dataprovider.getDataProvider().notifyEditNode(node);
+    saveRoot(true);
+}
+
+export function editNode(node: markdata.MarkData) {
+    if (!node) {
+        return;
+    }
+    nodeEditor.NodeEditPanel.createOrShow(node);
 }
 
 export function moveUpNode(currentNode: markdata.MarkData) {

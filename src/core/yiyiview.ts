@@ -25,7 +25,7 @@ export class YiYiView {
 
         this.dataProvider.onDidAddNode(this.onDidAddNode.bind(this));
         this.dataProvider.onDidRemoveNode(this.onDidRemoveNode.bind(this));
-        this.dataProvider.onDidEditNode(this.onDidEditNode.bind(this));
+        this.dataProvider.onDidEditNode(this.onDidEditNodeName.bind(this));
 
         vscode.window.onDidChangeVisibleTextEditors(this.onDidChangeChangeVisibleTextEditors.bind(this));
     }
@@ -48,7 +48,7 @@ export class YiYiView {
         }
     }
 
-    onDidEditNode(node: markdata.MarkData) {
+    onDidEditNodeName(node: markdata.MarkData) {
         let editor = this.findNodeEditor(node);
         if (editor) {
             this.renderOneEditorLines(editor);

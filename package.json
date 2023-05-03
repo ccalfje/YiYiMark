@@ -69,6 +69,14 @@
                 }
             },
             {
+                "command": "yiyimark.editNodeName",
+                "title": "YiYiMark:Edit Node Name",
+                "icon": {
+                    "dark": "media/edit_dark.svg",
+                    "light": "media/edit_light.svg"
+                }
+            },
+            {
                 "command": "yiyimark.editNode",
                 "title": "YiYiMark:Edit Node",
                 "icon": {
@@ -171,7 +179,7 @@
                 "key": "ctrl+y ctrl+m"
             },
             {
-                "command": "yiyimark.editNode",
+                "command": "yiyimark.editNodeName",
                 "key": "ctrl+y ctrl+e"
             }
         ],
@@ -251,7 +259,7 @@
                     "when": "view == yiyi-markview"
                 },
                 {
-                    "command": "yiyimark.editNode",
+                    "command": "yiyimark.editNodeName",
                     "when": "view == yiyi-markview",
                     "group": "inline"
                 },
