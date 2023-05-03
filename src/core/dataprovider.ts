@@ -177,11 +177,11 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
 // group1.addChild(child11);
 // group1.addChild(child12);
 
-export let root = markdata.createRootMarkData();
 // root.addChild(child1);
 // root.addChild(child2);
 // root.addChild(group1);
 
+let root = markdata.createRootMarkData();
 let provider = new MarkDataProvider(root);
 
 export function getDataProvider() {

@@ -99,12 +99,13 @@ export class MarkData extends TreeNode {
                 light: path.join(__filename, '..', '..', '..', 'media', 'folder.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'folder_dark.svg')
             };
+            treeItem.tooltip = this.getComment() + '\n' + this.getCreateDate();
         } else {
             treeItem.iconPath = {
                 light: path.join(__filename, '..', '..', '..', 'media', 'catpaw.svg'),
                 dark: path.join(__filename, '..', '..', '..', 'media', 'catpaw_dark.svg')
             };
-            treeItem.tooltip = this.filePath + ":" + this.line + ` \n` + this.comment;
+            treeItem.tooltip = this.getFilePath() + ":" + this.getLineNum() + ` \n` + this.getComment() + '\n' + this.getCreateDate();
         }
         treeItem.command = {title: "Jump", command: "yiyimark.jump", arguments:[this]};
         return treeItem;
@@ -164,8 +165,13 @@ export class MarkData extends TreeNode {
         }
     }
 
-    getContextValue() {
-        return this.contextValue;
+    getCreateDate(): string {
+        return this.createDate;
+    }
+    updateCreateDate() {
+        let date = new Date();
+        let time = date.toLocaleString( );  //获取日期与时间
+        this.createDate = time;
     }
 
     id: string = ""; // 唯一编号
@@ -177,6 +183,7 @@ export class MarkData extends TreeNode {
     collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None;
 
     contextValue = 'dependency';
+    createDate: string = "";
 }
 
 export function isMarkDataEqual(root1: MarkData, root2: MarkData) {
@@ -229,6 +236,7 @@ export function createFileMarkData(name: string, comment: string, filePath: stri
     data.setLineNum(line);
     data.setMarkType(MarkType.file);
     data.setCollapsibleState(vscode.TreeItemCollapsibleState.None);
+    data.updateCreateDate();
     return data;
 }
 
@@ -237,6 +245,7 @@ export function createGroupMarkData(name: string): MarkData {
     data.setName(name);
     data.setMarkType(MarkType.group);
     data.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
+    data.updateCreateDate();
     return data;
 }
 
@@ -245,6 +254,7 @@ export function createRootMarkData(): MarkData {
     data.setName("root");
     data.setMarkType(MarkType.group);
     data.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
+    data.updateCreateDate();
     return data;
 }
 
@@ -257,7 +267,7 @@ function markDataToObj(data: MarkData) : any {
         "filePath": data.getFilePath(),
         "line": data.getLineNum(),
         "collapsibleState": data.getCollapsibleState(),
-        "contextValue": data.getContextValue(),
+        "createDate": data.getCreateDate(),
         "children": data.getChildren().map(value=> markDataToObj(value as MarkData))
     };
     return obj;
@@ -273,6 +283,7 @@ function createMarkDataByJSON(data: any): MarkData {
     res.line = data.line;
     res.collapsibleState = data.collapsibleState;
     res.contextValue = data.contextValue;
+    res.createDate = data.createDate || '';
     for (let child of data.children) {
         let childNode = createMarkDataByJSON(child);
         res.addChild(childNode);
