@@ -6,6 +6,7 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
     private _onDidChangeTreeData: vscode.EventEmitter<markdata.MarkData | undefined | void> = new vscode.EventEmitter<markdata.MarkData | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<markdata.MarkData | undefined | void> = this._onDidChangeTreeData.event;
 
+    // 以下是私有实现
     private _onDidAddNode: vscode.EventEmitter<markdata.MarkData> = new vscode.EventEmitter<markdata.MarkData>();
     readonly onDidAddNode: vscode.Event<markdata.MarkData> = this._onDidAddNode.event;
 
@@ -17,6 +18,11 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
 
     constructor(rootNode: markdata.MarkData) {
         this.rootNode = rootNode;
+        this.fileViewProvider = new MarkDataProviderToFileView(this.fileNodeMap);
+    }
+
+    getFileProvider() {
+        return this.fileViewProvider;
     }
 
     getRootNode() {
@@ -39,6 +45,7 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
         this.refreshNode(parentNode as markdata.MarkData);
         this.addFileNodeMap(newNode);
         this._onDidAddNode.fire(newNode);
+        this.fileViewProvider.refresh();
     }
 
     notifyRemoveNode(node: markdata.MarkData, parentNode: markdata.MarkData) {
@@ -46,16 +53,19 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
         this.refreshNode(parentNode as markdata.MarkData);
         this.removeFileNodeMap(node);
         this._onDidRemoveNode.fire(node);
+        this.fileViewProvider.refresh();
     }
 
     notifyEditNode(node: markdata.MarkData) {
         this.nodeListNeedUpdate = true;
         this.refreshNode(node);
         this._onDidEditNode.fire(node);
+        this.fileViewProvider.refresh();
     }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
+        this.fileViewProvider.refresh();
     }
 
     refreshNode(node: markdata.MarkData) {
@@ -64,6 +74,7 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
         } else {
             this._onDidChangeTreeData.fire(node);
         }
+        this.fileViewProvider.refresh();
     }
 
     // interface
@@ -163,6 +174,63 @@ export class MarkDataProvider implements vscode.TreeDataProvider<markdata.MarkDa
     private nodeList: markdata.MarkData[] = [];
     private nodeListNeedUpdate: boolean = true;
 
+    // 用于渲染行标记
+    private fileNodeMap: Map<string, markdata.MarkData[]> = new Map();
+
+    private fileViewProvider: MarkDataProviderToFileView;
+}
+
+export class MarkDataProviderToFileView implements vscode.TreeDataProvider<markdata.MarkData> {
+    // interface
+    private _onDidChangeTreeData: vscode.EventEmitter<markdata.MarkData | undefined | void> = new vscode.EventEmitter<markdata.MarkData | undefined | void>();
+    readonly onDidChangeTreeData: vscode.Event<markdata.MarkData | undefined | void> = this._onDidChangeTreeData.event;
+
+    constructor(fileNodeMap: Map<string, markdata.MarkData[]>) {
+        this.fileNodeMap = fileNodeMap;
+        // root节点永远不变
+        this.rootNode = markdata.createRootMarkData();
+    }
+
+    refresh(): void {
+        this._onDidChangeTreeData.fire();
+    }
+
+    // interface
+    getTreeItem(element: markdata.MarkData): vscode.TreeItem {
+        let treeItem = element.createTreeItem();
+        return treeItem;
+    }
+
+    // interface
+    getChildren(element?: markdata.MarkData): Thenable<markdata.MarkData[]> {
+        // 仅展示一层结构
+        if (element) {
+            return Promise.resolve([]);
+        } else {
+            let uri = vscode.window.activeTextEditor?.document.uri;
+            if (uri) {
+                let relativePath = vscode.workspace.asRelativePath(uri);
+                let nodes = this.getFileNodeList(relativePath);
+                if (nodes){
+                    return Promise.resolve(nodes);
+                } 
+                return Promise.resolve([]);
+            }
+            return Promise.resolve([]);
+        }
+    }
+
+    // interface
+    getParent(element: markdata.MarkData): vscode.ProviderResult<markdata.MarkData> {
+        return this.rootNode;
+    }
+
+    getFileNodeList(path : string) : markdata.MarkData[] | undefined {
+        let res = this.fileNodeMap.get(path);
+        return res;
+    }
+
+    private rootNode: markdata.MarkData;
     // 用于渲染行标记
     private fileNodeMap: Map<string, markdata.MarkData[]> = new Map();
 }

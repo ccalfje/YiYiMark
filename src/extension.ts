@@ -204,8 +204,10 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         markoperator.moveToNodeLoc(node);
+        view.selectNode(node);
     }));
 
+    // 该命令用于反选
     context.subscriptions.push(vscode.commands.registerCommand('yiyimark.selectNode', (args) => {
         let root = dataprovider.getDataProvider().getRootNode();
         if (!root) {

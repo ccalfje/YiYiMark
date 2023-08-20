@@ -2,7 +2,7 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.0.10",
+    "version": "0.1.0",
     "publisher": "ccalfje",
     "author": {
         "name": "ccalfje"
@@ -200,7 +200,12 @@
             "yiyi-mark": [
                 {
                     "id": "yiyi-markview",
-                    "name": "",
+                    "name": "Markers",
+                    "icon": "media/dep.svg"
+                },
+                {
+                    "id": "yiyi-markview-file",
+                    "name": "Markers in Current File",
                     "icon": "media/dep.svg"
                 }
             ]
@@ -255,29 +260,29 @@
             "view/item/context": [
                 {
                     "command": "yiyimark.deleteNode",
-                    "when": "view == yiyi-markview",
+                    "when": "view == yiyi-markview || view == yiyi-markview-file",
                     "group": "inline"
                 },
                 {
                     "command": "yiyimark.deleteNode",
-                    "when": "view == yiyi-markview"
+                    "when": "view == yiyi-markview || view == yiyi-markview-file"
                 },
                 {
                     "command": "yiyimark.editNodeName",
-                    "when": "view == yiyi-markview",
+                    "when": "view == yiyi-markview || view == yiyi-markview-file",
                     "group": "inline"
                 },
                 {
                     "command": "yiyimark.editNodeName",
-                    "when": "view == yiyi-markview"
+                    "when": "view == yiyi-markview || view == yiyi-markview-file"
                 },
                 {
                     "command": "yiyimark.editNode",
-                    "when": "view == yiyi-markview"
+                    "when": "view == yiyi-markview || view == yiyi-markview-file"
                 },
                 {
                     "command": "yiyimark.editNode",
-                    "when": "view == yiyi-markview",
+                    "when": "view == yiyi-markview || view == yiyi-markview-file",
                     "group": "inline"
                 },
                 {

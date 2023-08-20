@@ -14,6 +14,11 @@ export class YiYiView {
             dragAndDropController: markoperator.getDragController()
         });
 
+
+        this.fileTreeView = vscode.window.createTreeView('yiyi-markview-file', {
+            treeDataProvider: this.dataProvider.getFileProvider(),
+        });
+
         // 注册焦点切换事件
         vscode.window.onDidChangeWindowState(markoperator.onWindowActive);
         // 注册工程切换事件  ----- 目前只支持打开一个工程的情况,也可以不注册
@@ -36,6 +41,7 @@ export class YiYiView {
         return this.treeView;
     }
 
+    // 目前这三个函数都是仅刷新文件的Decoration
     onDidAddNode(node: markdata.MarkData) {
         let editor = this.findNodeEditor(node);
         if (editor) {
@@ -73,6 +79,7 @@ export class YiYiView {
 
     onDidChangeChangeVisibleTextEditors(editors: readonly vscode.TextEditor[]) {
         this.renderAllNodeLines();
+        this.dataProvider.getFileProvider().refresh();
     }
 
     renderAllNodeLines() {
@@ -142,5 +149,6 @@ export class YiYiView {
 
     private dataProvider: dataprovider.MarkDataProvider;
     private treeView: vscode.TreeView<markdata.MarkData>;
+    private fileTreeView: vscode.TreeView<markdata.MarkData>;
     private editorDecorMap: Map<vscode.TextEditor, vscode.TextEditorDecorationType> = new Map;
 }
