@@ -206,6 +206,27 @@ export function activate(context: vscode.ExtensionContext) {
         markoperator.moveToNodeLoc(node);
     }));
 
+    context.subscriptions.push(vscode.commands.registerCommand('yiyimark.selectNode', (args) => {
+        let root = dataprovider.getDataProvider().getRootNode();
+        if (!root) {
+            return;
+        }
+        let indexArr = args.indexArr;
+        if (indexArr && indexArr.length > 0) {
+            let tempNode = root;
+            for(let index of indexArr) {
+                let children = tempNode.getChildren();
+                if (index < children.length) {
+                    tempNode = children[index] as markdata.MarkData; 
+                } else {
+                    console.log("Invalid indexArr", indexArr);
+                    return;
+                }
+            }
+            view.selectNode(tempNode);
+        }
+    }));
+
     markoperator.reloadData(true);
     view.renderAllNodeLines();
 

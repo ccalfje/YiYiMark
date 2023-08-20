@@ -1,33 +1,35 @@
 # YiYiMark
 Bookmark for Vs Code
 
-YiYiMark supports tagging code for quick jumping between locations. It also allows you to export your own bookmarks and share them for others to use.
-
-YiYiMark takes into account cases where multiple VsCode instances open projects that need to share the same bookmarks (e.g. downloading different branches of the same repository into separate folders), so it uses relative paths and does not support multiple folders in one workspace.
-
-Here are some of the features that YiYiMark provides:
-* Grouping
-* Drag and Drop (requires VsCode version > 1.64)
-* Fuzzy search
-* Import and export
-* Save data files in Json format
-* Open all files in the same group
+## 使用方法
+在代码文件中，打开右键菜单，选择Mark Current Line，即可创建一个书签节点。
+左侧选择YiYiMark的TreeView（猫爪图标），有更多操作。
 
 ![YiYiMark](readme_media/feature.gif)
 
+## 提供的功能：
+* 标记代码行，保存到书签节点
+* 书签节点分组，类似于文件系统的组织方式
+* 拖拽移动书签节点 (VsCode version > 1.64)
+* 模糊搜索
+* 导入导出
+* 书签以Json文件的形式保存
+* 可以设置书签文件目录，让多个工程共享同一个书签文件
+
+## 不支持的功能：
+* 不支持单个VsCode实例打开多个工程的场景
+
 ## Features
 
-* Does not support multiple folders in one workspace
-
-* Group 
+* 分组(Group)
 ![group](readme_media/group.png)
 
-* Fuzzy Search
+* 模糊搜索(Fuzzy search)
 YiYiMark:Search
 ![search](readme_media/search.png)
 
-* import and export bookmark
+* 书签导入导出(import and export)
 ![import](readme_media/importexport.png)
 
-* Support different projects to share the same bootkmark data 
+* 不同工程（文件夹）共享同一个书签文件(Multiple projects sharing the same mark data)
 ![mutiprojectonedata](readme_media/mutiprojectonedata.png)

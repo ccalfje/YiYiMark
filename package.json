@@ -2,7 +2,7 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "publisher": "ccalfje",
     "author": {
         "name": "ccalfje"
@@ -80,8 +80,8 @@
                 "command": "yiyimark.editNode",
                 "title": "YiYiMark:Edit Node",
                 "icon": {
-                    "dark": "media/edit_dark.svg",
-                    "light": "media/edit_light.svg"
+                    "dark": "media/editAll_Dark.svg",
+                    "light": "media/editAll.svg"
                 }
             },
             {
@@ -163,6 +163,10 @@
             {
                 "command": "yiyimark.jump",
                 "title": "YiYiMark:Jump"
+            },
+            {
+                "command": "yiyimark.selectNode",
+                "title": "YiYiMark:SelectNode"
             }
         ],
         "keybindings": [
@@ -264,8 +268,17 @@
                     "group": "inline"
                 },
                 {
+                    "command": "yiyimark.editNodeName",
+                    "when": "view == yiyi-markview"
+                },
+                {
                     "command": "yiyimark.editNode",
                     "when": "view == yiyi-markview"
+                },
+                {
+                    "command": "yiyimark.editNode",
+                    "when": "view == yiyi-markview",
+                    "group": "inline"
                 },
                 {
                     "command": "yiyimark.createGroup",

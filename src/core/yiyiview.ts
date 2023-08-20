@@ -28,6 +28,8 @@ export class YiYiView {
         this.dataProvider.onDidEditNode(this.onDidEditNodeName.bind(this));
 
         vscode.window.onDidChangeVisibleTextEditors(this.onDidChangeChangeVisibleTextEditors.bind(this));
+        this.treeView.onDidExpandElement(this.onExpandElement.bind(this));
+        this.treeView.onDidCollapseElement(this.onCollapseElement.bind(this));
     }
 
     getTreeView() {
@@ -118,6 +120,18 @@ export class YiYiView {
             this.editorDecorMap.set(editor, decoration);
         }
         return decoration;
+    }
+
+    onExpandElement(event : vscode.TreeViewExpansionEvent<markdata.MarkData>) {
+        event.element.setCollapsibleState(vscode.TreeItemCollapsibleState.Expanded);
+    }
+
+    onCollapseElement(event : vscode.TreeViewExpansionEvent<markdata.MarkData>) {
+        event.element.setCollapsibleState(vscode.TreeItemCollapsibleState.Collapsed);
+    }
+
+    selectNode(node: markdata.MarkData) {
+        this.treeView.reveal(node);
     }
 
 

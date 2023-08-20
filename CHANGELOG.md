@@ -1,9 +1,16 @@
 # Change Log
 
-* 0.0.8
-  The content of the current line is now automatically recorded when creating a bookmark.
-  Added the function of hovering tips.
+* 0.0.10
+  新增点击悬浮提示的内容可以反向选中treeview节点的功能。
 
+* 0.0.9
+  增加了编辑功能，现在可以修改书签节点的大部分属性了。
+  新增了一个属性：创建时间。
+  修复了重复点击当前选中节点不会跳转的bug。
+
+* 0.0.8
+  现在会自动记录书签所在行的代码内容到comment属性中。
+  增加了悬浮提示。
 
 * 0.0.7
-  Fix the path error of linux system.
+  修复了linux系统中，文件路径错误的bug。
