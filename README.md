@@ -33,3 +33,7 @@ YiYiMark:Search
 
 * 不同工程（文件夹）共享同一个书签文件(Multiple projects sharing the same mark data)
 ![mutiprojectonedata](readme_media/mutiprojectonedata.png)
+
+## 其他
+
+在某些特殊场景下，工程路径可能无法正确获取，这时可以在插件的WorkSpace配置中手动指定一个路径。

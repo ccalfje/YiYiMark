@@ -37,6 +37,22 @@ function getProjectPath() {
     }
 }
 
+function getProjectPathUri() : undefined | vscode.Uri {
+    let configPath = getProjectPathConfig();
+    if (configPath !== "" && fs.existsSync(configPath)) {
+        return vscode.Uri.file(configPath);
+    }
+
+    if (typeof (vscode.workspace.workspaceFolders) === 'undefined') {
+        return undefined;
+    }
+    if (vscode.workspace.workspaceFolders.length === 1) {
+        return vscode.workspace.workspaceFolders[0].uri;
+    } else {
+        return undefined;
+    }
+}
+
 let gMDate: Date | null = null;
 
 function getSavedModifyDate() {
@@ -60,6 +76,11 @@ function getAutoSaveConfig(): boolean {
 function getAutoReadConfig(): boolean {
     let config = vscode.workspace.getConfiguration("yiyimark");
     return config.AutoReadChange;
+}
+
+function getProjectPathConfig(): string {
+    let config = vscode.workspace.getConfiguration("yiyimark");
+    return config.ProjectPath;
 }
 
 enum SavePathResType {
@@ -90,17 +111,17 @@ function getFileModifyDate(path: string) {
 function getSavePath(): SavePathResult {
     let configPath = getConfigPath();
     if (configPath === "") {
-        let proPath = getProjectPath();
-        if (proPath === "") {
+        let proPathUri = getProjectPathUri();
+        if (proPathUri === undefined) {
             console.log(__filename, "get project path failed");
             return { result: SavePathResType.getProjectPathFailed, resPath: configPath };
         } else {
-            let resDir = path.join(proPath, ".vscode");
+            let resDir = path.join(proPathUri.fsPath, ".vscode");
             if (!fs.existsSync(resDir)) {
                 fs.mkdirSync(resDir);
             }
 
-            let resPath = path.join(proPath, ".vscode", "markData.json");
+            let resPath = path.join(proPathUri.fsPath, ".vscode", "markData.json");
             if (!fs.existsSync(resPath)) {
                 fs.writeFileSync(resPath, "");
             }
@@ -162,7 +183,7 @@ export function saveRoot(showInfo: boolean) {
 
 export function exportNode(node: markdata.MarkData) {
     vscode.window.showSaveDialog({
-        defaultUri: vscode.Uri.file(getProjectPath()),
+        defaultUri: getProjectPathUri(),
         filters: {
             'JSON': ['json']
         }
@@ -176,7 +197,7 @@ export function exportNode(node: markdata.MarkData) {
 
 export function importNode(parentNode: markdata.MarkData) {
     vscode.window.showOpenDialog({
-        defaultUri: vscode.Uri.file(getProjectPath()),
+        defaultUri: getProjectPathUri(),
         canSelectFiles: true,
         canSelectFolders: false,
         canSelectMany: true,
@@ -463,17 +484,17 @@ export async function moveToNodeLoc(node: markdata.MarkData) {
     let line = node.getLineNum();
     const newSelection = new vscode.Selection(line, 0, line, 0);
 
-    let filePath = vscode.Uri.file(node.getFilePath()).fsPath;
+    let filePathUri = vscode.Uri.file(node.getFilePath());
 
-    let proPath = getProjectPath();
+    let proPathUri = getProjectPathUri();
     // 判断是绝对路径还是相对路径
-    if (!filePath.includes(proPath)) {
+    if (proPathUri && !path.isAbsolute(node.getFilePath())) {
         // 这里的相对路径没办法支持打开多个工程的情况
-        filePath = getProjectPath() + filePath;
+        filePathUri = vscode.Uri.joinPath(proPathUri, filePathUri.fsPath);
     }
 
     try {
-        let textEdit = await vscode.window.showTextDocument(vscode.Uri.file(filePath));
+        let textEdit = await vscode.window.showTextDocument(filePathUri);
         textEdit.selection = newSelection;
         textEdit.revealRange(newSelection, reviewType);
     } catch (error: any) {

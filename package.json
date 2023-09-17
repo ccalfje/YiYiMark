@@ -2,7 +2,7 @@
     "name": "yiyimark",
     "displayName": "YiYiMark",
     "description": "Bookmark for Vs Code.",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "publisher": "ccalfje",
     "author": {
         "name": "ccalfje"
@@ -52,6 +52,11 @@
                     "type": "boolean",
                     "description": "Whether to show hover tips.",
                     "default": true
+                },
+                "yiyimark.ProjectPath": {
+                    "type": "string",
+                    "description": "In some special scenarios, the project path may be obtained incorrectly, resulting in a open failure. In this case, you can manually specify a path.",
+                    "default": ""
                 }
             }
         },
