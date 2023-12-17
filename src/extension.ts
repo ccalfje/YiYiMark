@@ -29,15 +29,22 @@ export function activate(context: vscode.ExtensionContext) {
 
         let relativePath = vscode.workspace.asRelativePath(uri);
 
-        vscode.window.showInputBox({ title: "Please enter a mark name." }).then((value: string | undefined) => {
+        let comment = vscode.window.activeTextEditor?.document.lineAt(currentline).text;
+        if (comment === undefined) {
+            comment = "";
+        } else {
+            comment = comment.trim();
+        }
+
+        let defaultMarkName = vscode.workspace.getConfiguration('yiyimark').get('DefaultMarkName', true);
+        let inputValue = "";
+        if (defaultMarkName) {
+            inputValue = comment;
+        }
+
+        vscode.window.showInputBox({ title: "Please enter a mark name.", value: inputValue, valueSelection: undefined }).then((value: string | undefined) => {
             if (value !== undefined) {
-                let comment = vscode.window.activeTextEditor?.document.lineAt(currentline).text;
-                if (!comment) {
-                    comment = "";
-                } else {
-                    comment = comment.trim();
-                }
-                let newNode = markdata.createFileMarkData(value, comment, relativePath, currentline);
+                let newNode = markdata.createFileMarkData(value, comment as string, relativePath, currentline);
                 markoperator.markCurrentLine(newNode, treeView.selection[0]);
             }
         });
